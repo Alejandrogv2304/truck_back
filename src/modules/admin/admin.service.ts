@@ -48,4 +48,7 @@ export class AdminService {
         throw new InternalServerErrorException('Ocurrió un error al registrar el usuario')
      }
     }
+     async findByEmail(correo: string): Promise<Admin | null> {
+    return this.adminRepository.findOne({ where: { correo } });
+  }
 }

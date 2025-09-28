@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AdminModule } from './modules/admin/admin.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [ConfigModule.forRoot({
@@ -17,6 +18,7 @@ import { AdminModule } from './modules/admin/admin.module';
       ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
     }),
     AdminModule,
+    AuthModule,
    
   ],
   controllers: [AppController],
