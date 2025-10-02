@@ -3,6 +3,12 @@ import { AdminService } from '../admin/admin.service';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcryptjs';
+import { Admin } from '../admin/entities/admin.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+
+
+type AdminSafe = Omit<Admin, 'hash' | 'salt' | 'fecha_creacion'> 
 
 @Injectable()
 export class AuthService {
@@ -10,6 +16,9 @@ export class AuthService {
     constructor(
         private adminService: AdminService,
         private jwtService: JwtService,
+        
+        @InjectRepository(Admin)
+        private readonly adminRepository: Repository<Admin>,
     ){}
      async login(loginDto: LoginDto) {
     const { correo, password } = loginDto;
@@ -51,4 +60,24 @@ export class AuthService {
       },
     };
      }
+
+    async findOneById(id:number): Promise<AdminSafe | null> {
+
+     
+    const admin = await this.adminRepository.findOne({
+      where: { id_admin: id }
+    });
+
+    if (!admin) return null;
+
+    // Excluir hash y salt
+    const { hash, salt,fecha_creacion, ...rest } = admin;
+
+   
+
+    return {
+      ...rest
+    };
+  }
+
 }
