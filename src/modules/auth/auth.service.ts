@@ -73,7 +73,6 @@ export class AuthService {
     // Excluir hash y salt
     const { hash, salt,fecha_creacion, ...rest } = admin;
 
-   
 
     return {
       ...rest
