@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Camion } from 'src/modules/camion/entities/camion.entity';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 
 
 
@@ -28,6 +29,9 @@ export class Admin {
   @Column({ type: 'timestamptz', default: () => 'NOW()' })
   fecha_creacion: Date;
 
+  // 📌 Relación con Camiones
+  @OneToMany(() => Camion, (camion) => camion.admin)
+  camiones: Camion[];
   
 
 }
