@@ -1,7 +1,10 @@
 import { Admin } from 'src/modules/admin/entities/admin.entity';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 
-
+export enum CamionEstado {
+  ACTIVO = 'activo',
+  INACTIVO = 'inactivo',
+}
 
 @Entity('camion')
 export class Camion {
@@ -15,15 +18,16 @@ export class Camion {
   modelo: string;
 
   
-   @Column({
+  @Column({
     type: 'enum',
-    enum: ['Disponible','Fuera de servicio'],
-    default: 'Disponible',
+    enum: CamionEstado,
+    default: CamionEstado.ACTIVO,
   })
-  estado: string;
+  estado: CamionEstado;
 
-  // 📌 Relación con Admin
+  //  Relación con Admin
   @ManyToOne(() => Admin, (admin) => admin.camiones, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'id_admin' }) 
   admin: Admin;  
 
 }

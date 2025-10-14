@@ -29,7 +29,7 @@ export class Admin {
   @Column({ type: 'timestamptz', default: () => 'NOW()' })
   fecha_creacion: Date;
 
-  // 📌 Relación con Camiones
+  // Relación con Camiones
   @OneToMany(() => Camion, (camion) => camion.admin)
   camiones: Camion[];
   

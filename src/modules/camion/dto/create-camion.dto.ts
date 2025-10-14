@@ -20,8 +20,4 @@ export class CreateCamionDto {
   @Length(3, 100)
   modelo: string;
 
-  @IsInt({ message: 'El id_admin debe ser un número entero' })
-  @IsNotEmpty({ message: 'El id_admin es obligatorio' })
-  id_admin: number;
-
 }

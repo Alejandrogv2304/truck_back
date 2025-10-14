@@ -13,7 +13,7 @@ export class CamionService {
             private readonly camionRepository: Repository<Camion>,
         ){}
 
-     async createCamion(CreateCamionDto:CreateCamionDto): Promise<CreateCamionResponseDto>{
+     async createCamion(CreateCamionDto:CreateCamionDto, id_admin:number): Promise<CreateCamionResponseDto>{
           // 1. Validar correo duplicado
         const existingCamion = await this.camionRepository.findOne({
          where: { placa: CreateCamionDto.placa },
@@ -27,7 +27,7 @@ export class CamionService {
           const newCamion = this.camionRepository.create({
           placa: CreateCamionDto.placa,
           modelo: CreateCamionDto.modelo,
-          admin: { id_admin: CreateCamionDto.id_admin } as Admin,
+          admin: { id_admin: id_admin } as Admin,
           })
         
     
