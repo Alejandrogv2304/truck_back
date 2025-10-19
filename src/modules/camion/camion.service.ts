@@ -1,9 +1,9 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Camion } from './entities/camion.entity';
+import { Camion, CamionEstado } from './entities/camion.entity';
 import { Repository } from 'typeorm';
 import { CreateCamionDto } from './dto/create-camion.dto';
-import { CreateCamionResponseDto } from './dto/create-response.dto';
+import { CreateCamionResponseDto, ResponseGetCamionesDto } from './dto/create-response.dto';
 import { Admin } from '../admin/entities/admin.entity';
 
 @Injectable()
@@ -40,4 +40,68 @@ export class CamionService {
             throw new InternalServerErrorException('Ocurrió un error al registrar el camión')
          }
         }
+
+        async getAllCamiones(id_admin:number):Promise<ResponseGetCamionesDto[]>{
+        const camiones = await this.camionRepository.find({
+          where:  { admin: {
+                id_admin: id_admin, 
+            }, 
+         },
+        })
+
+        if(camiones.length === 0){
+         throw new NotFoundException('No se encontraron camiones asociados a este admin')
+        }
+
+        return camiones.map(camion => this.mapToResponseDto(camion));
+        }
+
+        private mapToResponseDto(camion: Camion): ResponseGetCamionesDto {
+      return {
+          id_camion: camion.id_camion,
+          placa: camion.placa,
+          modelo: camion.modelo,
+          estado: camion.estado,
+      };
+  }
+  
+  //Método para obtener un camión según su id
+  async getOneCamion(id_camion: number):Promise<ResponseGetCamionesDto>{
+
+   const camion = await this.camionRepository.findOne({
+      where: { id_camion: id_camion}
+   })
+
+   if(!camion){
+      throw new NotFoundException('No se encontraron los datos de ese camion')
+   }
+    return camion;
 }
+
+async updateStateCamion(id_camion: number): Promise<{ message: string }> {
+    // Buscar camion
+    const camion = await this.camionRepository.findOne({ where: { id_camion } });
+
+    if (!camion) {
+      throw new NotFoundException(`Ruta con id ${id_camion} no encontrada`);
+    }
+
+    // Actualizar estado
+    try {
+      camion.estado =
+        camion.estado === CamionEstado.ACTIVO
+          ? CamionEstado.INACTIVO
+          : CamionEstado.ACTIVO;
+      await this.camionRepository.save(camion);
+      return {
+        message: `El camion con id ${camion.id_camion} fue actualizado correctamente`,
+      };
+    } catch {
+      throw new InternalServerErrorException(
+        'Error al actualizar el estado del camion',
+      );
+    }
+  }
+
+
+  }
