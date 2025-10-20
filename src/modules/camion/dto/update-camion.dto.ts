@@ -1,18 +1,17 @@
 import {
-  IsNotEmpty,
   IsString,
   Length,
-  IsInt,
   Matches,
+  IsOptional,
 } from 'class-validator';
 
 
 // ====================
-// DTO Principal (Camion)
+// DTO Actualizar Camión
 // ====================
-export class CreateCamionDto {
+export class UpdateCamionDto {
   @IsString({ message: 'La placa debe ser una cadena de texto' })
-  @IsNotEmpty({ message: 'La placa debe ser obligatorio' })
+  @IsOptional()
   @Length(6, 6, {
     message: 'La placa debe tener exactamente 6 caracteres.',
   })
@@ -22,7 +21,7 @@ export class CreateCamionDto {
   placa: string;
 
   @IsString({ message: 'El modelo debe ser una cadena de texto' })
-  @IsNotEmpty({ message: 'El modelo es obligatorio' })
+  @IsOptional()
   @Length(3, 100)
   modelo: string;
 

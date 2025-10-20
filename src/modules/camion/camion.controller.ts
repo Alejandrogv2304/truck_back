@@ -4,6 +4,7 @@ import { CamionService } from './camion.service';
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 
 import type{ RequestWithUser } from 'src/types/request-with-user.interface';
+import { UpdateCamionDto } from './dto/update-camion.dto';
 
 @Controller('api/v1/camion')
 export class CamionController {
@@ -11,7 +12,7 @@ export class CamionController {
      
      @UseGuards(JwtAuthGuard)
      @Post()
-        async createAdmin(
+        async createCamion(
         @Body() CreateCamionDto: CreateCamionDto,
         @Req() req: RequestWithUser
       ) {
@@ -21,11 +22,29 @@ export class CamionController {
 
        @UseGuards(JwtAuthGuard)
        @Get()
-        async getCamniones(
+        async getCamiones(
         @Req() req: RequestWithUser
       ) {
         const id = req.user.sub;
         return await this.camionService.getAllCamiones(id);
+      }
+
+      
+
+     @UseGuards(JwtAuthGuard)
+     @Patch(':id/change-state')
+     async toggleEstado(@Param('id', ParseIntPipe) id: number) {
+     return await this.camionService.updateStateCamion(id);
+    }
+
+     @UseGuards(JwtAuthGuard)
+     @Patch('/:id')
+        async updateCamion(
+        @Body() updateCamionDto: UpdateCamionDto,
+        @Param('id', ParseIntPipe) id: number
+      ) {
+        
+        return await this.camionService.updateCamion(id,updateCamionDto);
       }
 
        @UseGuards(JwtAuthGuard)
@@ -35,10 +54,4 @@ export class CamionController {
       ) {
         return await this.camionService.getOneCamion(id);
       }
-
-      @UseGuards(JwtAuthGuard)
-     @Patch(':id/change-state')
-     async toggleEstado(@Param('id', ParseIntPipe) id: number) {
-     return await this.camionService.updateStateCamion(id);
-    }
 }

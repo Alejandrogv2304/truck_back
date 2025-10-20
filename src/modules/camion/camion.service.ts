@@ -1,10 +1,11 @@
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Camion, CamionEstado } from './entities/camion.entity';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Not, Repository } from 'typeorm';
 import { CreateCamionDto } from './dto/create-camion.dto';
 import { CreateCamionResponseDto, ResponseGetCamionesDto } from './dto/create-response.dto';
 import { Admin } from '../admin/entities/admin.entity';
+import { UpdateCamionDto } from './dto/update-camion.dto';
 
 @Injectable()
 export class CamionService {
@@ -102,6 +103,56 @@ async updateStateCamion(id_camion: number): Promise<{ message: string }> {
       );
     }
   }
+
+
+  async updateCamion(id_camion:number, updateCamionDto: UpdateCamionDto):Promise<{message:string}>{
+  
+    const camion = await this.camionRepository.findOne({
+      where:{id_camion: id_camion}
+    })
+
+    if(!camion){
+      throw new NotFoundException('No se encontró el camion con ese id')
+    }
+
+
+       if(updateCamionDto.placa){
+        const whereCondition: FindOptionsWhere<Camion> = {
+            placa: updateCamionDto.placa,
+            id_camion: Not(id_camion), // Excluimos el camión actual
+        };
+
+        const existingPlaca = await this.camionRepository.findOne({
+            where: whereCondition,
+        });
+
+        if (existingPlaca) {
+            // Usamos ConflictException (HTTP 409) para indicar violación de unicidad
+            throw new ConflictException(`La placa ${updateCamionDto.placa} ya está registrada en otro camión.`);
+        }
+      }
+
+    try {
+     
+        const result = await this.camionRepository.update(
+            id_camion, 
+            updateCamionDto 
+        );
+
+        
+        if (result.affected === 0) {
+             
+             throw new NotFoundException(`No se encontró el camión con ID ${id_camion}`); 
+        }
+
+        return {
+            message: `El camión con ID ${id_camion} fue actualizado correctamente`,
+        };
+    } catch {
+      throw new Error('Ocurrió un error al actualizar el camión')
+    }
+  }
+
 
 
   }
