@@ -3,7 +3,9 @@ import {
   Length,
   Matches,
   IsOptional,
+  IsEnum,
 } from 'class-validator';
+import { CamionEstado } from '../entities/camion.entity';
 
 
 // ====================
@@ -24,5 +26,9 @@ export class UpdateCamionDto {
   @IsOptional()
   @Length(3, 100)
   modelo: string;
+
+   @IsOptional()
+   @IsEnum(CamionEstado, { message: 'El estado debe ser activo o inactivo' })
+   estado?: CamionEstado;
 
 }
