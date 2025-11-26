@@ -21,7 +21,6 @@ export class Camion {
   @Column({
     type: 'enum',
     enum: CamionEstado,
-    default: CamionEstado.ACTIVO,
   })
   estado: CamionEstado;
 

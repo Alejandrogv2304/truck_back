@@ -28,6 +28,7 @@ export class CamionService {
           const newCamion = this.camionRepository.create({
           placa: CreateCamionDto.placa,
           modelo: CreateCamionDto.modelo,
+          ...(CreateCamionDto.estado && { estado: CreateCamionDto.estado }),
           admin: { id_admin: id_admin } as Admin,
           })
         
