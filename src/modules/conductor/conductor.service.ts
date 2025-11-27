@@ -4,7 +4,7 @@ import { Conductor, ConductorEstado } from './entities/conductor.entity';
 import { Repository } from 'typeorm';
 import { Admin } from '../admin/entities/admin.entity';
 import { CreateConductorDto } from './dto/create-conductor.dto';
-import { CreateConductorResponseDto } from './dto/create-conductor-response.dto';
+import { ConductorDataDto, CreateConductorResponseDto } from './dto/create-conductor-response.dto';
 
 @Injectable()
 export class ConductorService {
@@ -127,4 +127,53 @@ export class ConductorService {
                   );
                 }
               }
+
+
+  /**
+   * Obtiene todos los conductores asociados a un admin específico
+   * @param idAdmin - ID del admin autenticado
+   * @returns Array de conductores (puede ser vacío si no tiene ninguno)
+   */
+  async getAllConductores(idAdmin: number): Promise<ConductorDataDto[]> {
+    this.logger.log(`Consultando conductores del admin ${idAdmin}`);
+    
+    try {
+      const conductores = await this.conductorRepository.find({
+        where: { 
+          admin: { id_admin: idAdmin }
+        },
+        order: { fecha_vinculacion: 'DESC' }
+      });
+
+      if (conductores.length === 0) {
+        this.logger.log(`Admin ${idAdmin} no tiene conductores registrados`);
+        return [];
+      }
+
+      this.logger.log(`Se encontraron ${conductores.length} conductores para admin ${idAdmin}`);
+      return conductores.map(conductor => this.mapToResponseDto(conductor));
+      
+    } catch (error) {
+      this.logger.error(
+        `Error al consultar conductores del admin ${idAdmin}: ${error.message}`,
+        error.stack
+      );
+      throw new InternalServerErrorException('Error al obtener la lista de conductores');
+    }
+  }
+
+  /**
+   * Mapea una entidad Conductor a su DTO de respuesta
+   * @private
+   */
+  private mapToResponseDto(conductor: Conductor): ConductorDataDto {
+    return {
+      id_conductor: conductor.id_conductor,
+      nombre: conductor.nombre,
+      apellido: conductor.apellido,
+      estado: conductor.estado,
+      fecha_vinculacion: conductor.fecha_vinculacion,
+      identificacion: conductor.identificacion,
+    };
+  }             
 }

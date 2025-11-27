@@ -18,3 +18,5 @@ export class ConductorDataDto {
   fecha_vinculacion: Date;
   estado: string;
 }
+
+
