@@ -25,7 +25,7 @@ export class Camion {
   estado: CamionEstado;
 
   //  Relación con Admin
-  @ManyToOne(() => Admin, (admin) => admin.camiones, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Admin, (admin) => admin.camiones, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'id_admin' }) 
   admin: Admin;  
 
