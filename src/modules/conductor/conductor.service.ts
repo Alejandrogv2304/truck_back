@@ -1,9 +1,10 @@
-import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Conductor, ConductorEstado } from './entities/conductor.entity';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Not, Repository } from 'typeorm';
 import { Admin } from '../admin/entities/admin.entity';
 import { CreateConductorDto } from './dto/create-conductor.dto';
+import { UpdateConductorDto } from './dto/update-conductor.dto';
 import { ConductorDataDto, CreateConductorResponseDto } from './dto/create-conductor-response.dto';
 
 @Injectable()
@@ -175,5 +176,88 @@ export class ConductorService {
       fecha_vinculacion: conductor.fecha_vinculacion,
       identificacion: conductor.identificacion,
     };
-  }             
+  }           
+  
+  
+
+
+  /**
+   * Actualiza un conductor existente
+   * @param idConductor - ID del conductor a actualizar
+   * @param updateConductorDto - Datos a actualizar
+   * @param idAdmin - ID del admin autenticado (ownership)
+   * @returns Mensaje de confirmación con datos actualizados
+   */
+  async updateConductor(
+    idConductor: number,
+    updateConductorDto: UpdateConductorDto,
+    idAdmin: number
+  ): Promise<{ message: string; data: ConductorDataDto }> {
+    this.logger.log(`Actualizando conductor ${idConductor} del admin ${idAdmin}`);
+
+    // 1. Verificar que el conductor existe y pertenece al admin (multi-tenancy)
+    const conductor = await this.conductorRepository.findOne({
+      where: {
+        id_conductor: idConductor,
+        admin: { id_admin: idAdmin }
+      }
+    });
+
+    if (!conductor) {
+      this.logger.warn(`Intento de actualizar conductor inexistente o no autorizado: ${idConductor} por admin ${idAdmin}`);
+      throw new NotFoundException('Conductor no encontrado o no tienes permisos');
+    }
+
+    // 2. Validar identificación duplicada DENTRO del mismo admin
+    if (updateConductorDto.identificacion) {
+      const existingIdentificacion = await this.conductorRepository.findOne({
+        where: {
+          identificacion: updateConductorDto.identificacion,
+          id_conductor: Not(idConductor),
+          admin: { id_admin: idAdmin } // ← CRÍTICO: validar solo en su admin
+        },
+      });
+
+      if (existingIdentificacion) {
+        this.logger.warn(`Intento de duplicar identificación ${updateConductorDto.identificacion} en admin ${idAdmin}`);
+        throw new ConflictException(`La identificación ${updateConductorDto.identificacion} ya está registrada en otro conductor`);
+      }
+    }
+
+    // 3. Preparar datos para actualización
+    const updateData: Partial<Conductor> = {};
+
+    if (updateConductorDto.nombre) updateData.nombre = updateConductorDto.nombre;
+    if (updateConductorDto.apellido) updateData.apellido = updateConductorDto.apellido;
+    if (updateConductorDto.identificacion) updateData.identificacion = updateConductorDto.identificacion;
+    if (updateConductorDto.estado) updateData.estado = updateConductorDto.estado;
+    if (updateConductorDto.fecha_vinculacion) {
+      updateData.fecha_vinculacion = new Date(updateConductorDto.fecha_vinculacion);
+    }
+
+    // 4. Actualizar conductor
+    try {
+      await this.conductorRepository.update(idConductor, updateData);
+
+      // 5. Obtener conductor actualizado
+      const updatedConductor = await this.conductorRepository.findOne({
+        where: { id_conductor: idConductor }
+      });
+
+      this.logger.log(`Conductor ${idConductor} actualizado exitosamente por admin ${idAdmin}`);
+
+      return {
+        message: 'El conductor fue actualizado correctamente',
+        data: this.mapToResponseDto(updatedConductor!),
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error al actualizar conductor ${idConductor}: ${error.message}`,
+        error.stack
+      );
+      throw new InternalServerErrorException('Ocurrió un error al actualizar el conductor');
+    }
+  }
+  
+  
 }
