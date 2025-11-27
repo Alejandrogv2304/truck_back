@@ -1,4 +1,5 @@
 import { Camion } from 'src/modules/camion/entities/camion.entity';
+import { Conductor } from 'src/modules/conductor/entities/conductor.entity';
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 
 
@@ -33,5 +34,8 @@ export class Admin {
   @OneToMany(() => Camion, (camion) => camion.admin)
   camiones: Camion[];
   
+  // Relación con Conductores
+  @OneToMany(() => Conductor, (conductor) => conductor.admin)
+  conductores: Conductor[];
 
 }
