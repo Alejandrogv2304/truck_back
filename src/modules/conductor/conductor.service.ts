@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Conductor } from './entities/conductor.entity';
+import { Conductor, ConductorEstado } from './entities/conductor.entity';
 import { Repository } from 'typeorm';
 import { Admin } from '../admin/entities/admin.entity';
 import { CreateConductorDto } from './dto/create-conductor.dto';
@@ -81,4 +81,50 @@ export class ConductorService {
               }
             }
     
+
+            async updateStateConductor(
+              idConductor: number, 
+              idAdmin: number
+            ): Promise<{ message: string; nuevoEstado: ConductorEstado }> {
+                // 1. Buscar conductor con validación de ownership (multi-tenancy)
+                const conductor = await this.conductorRepository.findOne({ 
+                  where: { 
+                    id_conductor: idConductor,
+                    admin: { id_admin: idAdmin }  
+                  } 
+                });
+            
+                if (!conductor) {
+                  this.logger.warn(`Intento de actualizar conductor inexistente o no autorizado: ${idConductor} por admin ${idAdmin}`);
+                  throw new NotFoundException(`Conductor con id ${idConductor} no encontrado o no tienes permisos`);
+                }
+            
+                // 2. Actualizar estado (toggle)
+                try {
+                  const estadoAnterior = conductor.estado;
+                  conductor.estado =
+                    conductor.estado === ConductorEstado.ACTIVO
+                      ? ConductorEstado.INACTIVO
+                      : ConductorEstado.ACTIVO;
+                  
+                  await this.conductorRepository.save(conductor);
+                  
+                  this.logger.log(
+                    `Estado de conductor ${idConductor} actualizado: ${estadoAnterior} → ${conductor.estado} (Admin: ${idAdmin})`
+                  );
+                  
+                  return {
+                    message: `El estado del conductor fue actualizado correctamente`,
+                    nuevoEstado: conductor.estado,
+                  };
+                } catch (error) {
+                  this.logger.error(
+                    `Error al actualizar estado del conductor ${idConductor}: ${error.message}`,
+                    error.stack
+                  );
+                  throw new InternalServerErrorException(
+                    'Error al actualizar el estado del conductor',
+                  );
+                }
+              }
 }

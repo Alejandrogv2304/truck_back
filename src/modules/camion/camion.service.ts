@@ -85,7 +85,7 @@ async updateStateCamion(id_camion: number): Promise<{ message: string }> {
     const camion = await this.camionRepository.findOne({ where: { id_camion } });
 
     if (!camion) {
-      throw new NotFoundException(`Ruta con id ${id_camion} no encontrada`);
+      throw new NotFoundException(`Camion con id ${id_camion} no encontrado`);
     }
 
     // Actualizar estado

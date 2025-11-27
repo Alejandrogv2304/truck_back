@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Param, ParseIntPipe, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { ConductorService } from './conductor.service';
 import { CreateConductorDto } from './dto/create-conductor.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -19,4 +19,11 @@ export class ConductorController {
             return await this.conductorService.createConductor(CreateConductorDto,id);
           }
     
+     @UseGuards(JwtAuthGuard)
+         @Patch(':id/change-state')
+         async toggleEstado(@Param('id', ParseIntPipe) id: number,
+         @Req() req: RequestWithUser) {
+         const idAdmin = req.user.sub;
+         return await this.conductorService.updateStateConductor(id,idAdmin);
+        }
 }
