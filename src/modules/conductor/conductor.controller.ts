@@ -50,4 +50,14 @@ export class ConductorController {
             const idAdmin = req.user.sub;
             return await this.conductorService.updateConductor(idConductor,updateConductorDto,idAdmin);
           }
+
+          @UseGuards(JwtAuthGuard)
+          @Get('/:id')
+          async getOneConductor(
+          @Param('id', ParseIntPipe) id: number,
+          @Req() req: RequestWithUser
+          ) {
+          const idAdmin = req.user.sub;
+          return await this.conductorService.getOneConductor(id,idAdmin);
+           }
 }

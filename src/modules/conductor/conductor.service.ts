@@ -264,4 +264,19 @@ export class ConductorService {
   }
   
   
+
+    async getOneConductor(idConductor: number, idAdmin:number):Promise<ConductorDataDto>{
+  
+     const conductor = await this.conductorRepository.findOne({
+        where: { 
+                    id_conductor: idConductor,
+                    admin: { id_admin: idAdmin }  
+                  } 
+     })
+  
+     if(!conductor){
+        throw new NotFoundException('No se encontraron los datos de ese conductor')
+     }
+      return conductor;
+  }
 }
