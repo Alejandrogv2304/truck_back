@@ -5,6 +5,7 @@ export class CreateConductorResponseDto {
     nombre: string;
     apellido: string;
     identificacion: string;
+    telefono:string;
     fecha_vinculacion: Date;
     estado: string;
   };
@@ -15,6 +16,7 @@ export class ConductorDataDto {
   nombre: string;
   apellido: string;
   identificacion: string;
+  telefono:string;
   fecha_vinculacion: Date;
   estado: string;
 }

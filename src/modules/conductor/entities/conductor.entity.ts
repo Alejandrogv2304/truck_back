@@ -1,3 +1,4 @@
+import { Matches, IsString } from 'class-validator';
 import { Admin } from 'src/modules/admin/entities/admin.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 
@@ -22,13 +23,20 @@ export class Conductor {
 
   @Column({ type: 'date' })
   fecha_vinculacion: Date;
-  
+
   @Column({
     type: 'enum',
     enum: ConductorEstado,
     default: ConductorEstado.ACTIVO,
   })
   estado: ConductorEstado;
+
+  @Column({ length: 10 })
+  @IsString()
+  @Matches(/^[3]\d{9}$/, {
+    message: 'El número de teléfono debe tener 10 dígitos y comenzar por 3.',
+  })
+  telefono: string;
 
   // Relación con Admin
   @ManyToOne(() => Admin, (admin) => admin.conductores, { onDelete: 'RESTRICT' })

@@ -55,6 +55,7 @@ export class ConductorService {
                     ? new Date(createConductorDto.fecha_vinculacion) 
                     : new Date(),
                   ...(createConductorDto.estado && { estado: createConductorDto.estado }),
+                  telefono: createConductorDto.telefono,
                   admin: admin,
                 });
             
@@ -70,6 +71,7 @@ export class ConductorService {
                     apellido: conductor.apellido,
                     identificacion: conductor.identificacion,
                     fecha_vinculacion: conductor.fecha_vinculacion,
+                    telefono: conductor.telefono,
                     estado: conductor.estado,
                   }
                 };
@@ -173,6 +175,7 @@ export class ConductorService {
       nombre: conductor.nombre,
       apellido: conductor.apellido,
       estado: conductor.estado,
+      telefono: conductor.telefono,
       fecha_vinculacion: conductor.fecha_vinculacion,
       identificacion: conductor.identificacion,
     };
@@ -231,6 +234,7 @@ export class ConductorService {
     if (updateConductorDto.apellido) updateData.apellido = updateConductorDto.apellido;
     if (updateConductorDto.identificacion) updateData.identificacion = updateConductorDto.identificacion;
     if (updateConductorDto.estado) updateData.estado = updateConductorDto.estado;
+    if( updateConductorDto.telefono) updateData.telefono = updateConductorDto.telefono;
     if (updateConductorDto.fecha_vinculacion) {
       updateData.fecha_vinculacion = new Date(updateConductorDto.fecha_vinculacion);
     }

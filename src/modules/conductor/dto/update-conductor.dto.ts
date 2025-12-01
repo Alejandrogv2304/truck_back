@@ -5,6 +5,7 @@ import {
   IsEnum,
   IsDateString,
   IsNotEmpty,
+  Matches,
 } from 'class-validator';
 import { ConductorEstado } from '../entities/conductor.entity';
 
@@ -26,6 +27,14 @@ export class UpdateConductorDto {
   @IsNotEmpty({ message: 'La identificación no puede estar vacía' })
   @Length(3, 20, { message: 'La identificación debe tener entre 3 y 20 caracteres' })
   identificacion?: string;
+
+  @IsOptional()
+  @IsNotEmpty({ message: 'El número de teléfono es obligatorio' })
+  @IsString({message: 'El número de teléfono debe ser una cadena de texto' })
+  @Matches(/^[3]\d{9}$/, {
+        message: 'El número de teléfono debe tener 10 dígitos y comenzar por 3.',
+      })
+      telefono: string;
 
   @IsOptional()
   @IsDateString({}, { message: 'La fecha de vinculación debe ser una fecha válida (YYYY-MM-DD)' })
