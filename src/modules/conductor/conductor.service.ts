@@ -265,18 +265,28 @@ export class ConductorService {
   
   
 
-    async getOneConductor(idConductor: number, idAdmin:number):Promise<ConductorDataDto>{
-  
-     const conductor = await this.conductorRepository.findOne({
-        where: { 
-                    id_conductor: idConductor,
-                    admin: { id_admin: idAdmin }  
-                  } 
-     })
-  
-     if(!conductor){
-        throw new NotFoundException('No se encontraron los datos de ese conductor')
-     }
-      return conductor;
+  /**
+   * Obtiene un conductor específico por ID
+   * @param idConductor - ID del conductor
+   * @param idAdmin - ID del admin autenticado (ownership)
+   * @returns Datos del conductor
+   */
+  async getOneConductor(idConductor: number, idAdmin: number): Promise<ConductorDataDto> {
+    this.logger.log(`Consultando conductor ${idConductor} del admin ${idAdmin}`);
+
+    const conductor = await this.conductorRepository.findOne({
+      where: { 
+        id_conductor: idConductor,
+        admin: { id_admin: idAdmin }  
+      } 
+    });
+
+    if (!conductor) {
+      this.logger.warn(`Conductor ${idConductor} no encontrado o no pertenece al admin ${idAdmin}`);
+      throw new NotFoundException('No se encontraron los datos de ese conductor');
+    }
+
+    this.logger.log(`Conductor ${idConductor} encontrado para admin ${idAdmin}`);
+    return this.mapToResponseDto(conductor);
   }
 }

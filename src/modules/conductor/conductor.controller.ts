@@ -23,9 +23,10 @@ export class ConductorController {
 
      @UseGuards(JwtAuthGuard)
            @Get()
-            async getCamiones(
+            async getConductores(
             @Req() req: RequestWithUser
           ) {
+            
             const idAdmin = req.user.sub;
             return await this.conductorService.getAllConductores(idAdmin);
           }
