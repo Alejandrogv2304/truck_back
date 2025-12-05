@@ -1,10 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Viaje } from './entities/viaje.entity';
 import { Admin } from '../admin/entities/admin.entity';
 import { Camion } from '../camion/entities/camion.entity';
 import { Conductor } from '../conductor/entities/conductor.entity';
+import { CreateViajeDto } from './dto/create-viaje.dto';
+import { CreateViajeResponseDto } from './dto/create-viaje-response.dto';
 
 @Injectable()
 export class ViajeService {
@@ -20,7 +22,110 @@ export class ViajeService {
          private readonly conductorRepository: Repository<Conductor>,
      ){}
 
-     async createViaje(){
+     /**
+      * Crea un nuevo viaje validando todas las relaciones
+      * @param createViajeDto - Datos del viaje
+      * @param idAdmin - ID del admin autenticado (ownership)
+      * @returns Confirmación con datos del viaje creado
+      */
+     async createViaje(
+        createViajeDto: CreateViajeDto,
+        idAdmin: number
+     ): Promise<CreateViajeResponseDto> {
+        this.logger.log(`Creando viaje para admin ${idAdmin}`);
 
+        // 1. Verificar que el admin existe
+        const admin = await this.adminRepository.findOne({
+          where: { id_admin: idAdmin }
+        });
+        
+        if (!admin) {
+          this.logger.warn(`Intento de crear viaje con admin inexistente: ${idAdmin}`);
+          throw new NotFoundException('Admin no encontrado');
+        }
+
+        // 2. Validar que el camión existe y pertenece al admin
+        const camion = await this.camionRepository.findOne({
+          where: { 
+            id_camion: createViajeDto.idCamion,
+            admin: { id_admin: idAdmin }
+          }
+        });
+        
+        if (!camion) {
+          this.logger.warn(`Camión ${createViajeDto.idCamion} no encontrado o no pertenece al admin ${idAdmin}`);
+          throw new NotFoundException('Camión no encontrado o no tienes permisos');
+        }
+
+        // 3. Validar que el conductor existe y pertenece al admin
+        const conductor = await this.conductorRepository.findOne({
+          where: { 
+            id_conductor: createViajeDto.idConductor,
+            admin: { id_admin: idAdmin }
+          }
+        });
+        
+        if (!conductor) {
+          this.logger.warn(`Conductor ${createViajeDto.idConductor} no encontrado o no pertenece al admin ${idAdmin}`);
+          throw new NotFoundException('Conductor no encontrado o no tienes permisos');
+        }
+
+        // 4. Validar numero de manifiesto duplicado para este admin
+        const existingManifiesto = await this.viajeRepository.findOne({
+          where: { 
+            num_manifiesto: createViajeDto.num_manifiesto,
+            admin: { id_admin: idAdmin }
+          },
+        });
+        
+        if (existingManifiesto) {
+          this.logger.warn(`Intento de duplicar número de manifiesto: ${createViajeDto.num_manifiesto} para admin: ${idAdmin}`);
+          throw new BadRequestException('Ya existe un viaje con este número de manifiesto');
+        }
+  
+        // 5. Crear el viaje
+        try {
+          const newViaje = this.viajeRepository.create({
+            lugar_origen: createViajeDto.lugar_origen,
+            lugar_destino: createViajeDto.lugar_destino, 
+            num_manifiesto: createViajeDto.num_manifiesto,
+            valor: createViajeDto.valor,
+            fecha_inicio: createViajeDto.fecha_inicio 
+              ? new Date(createViajeDto.fecha_inicio) 
+              : new Date(),
+            ...(createViajeDto.estado && { estado: createViajeDto.estado }),
+            conductor: conductor, 
+            camion: camion,       
+            admin: admin,
+          });
+      
+          const viaje = await this.viajeRepository.save(newViaje);
+          
+          this.logger.log(
+            `Viaje creado exitosamente: ID ${viaje.id_viaje}, Camión: ${camion.id_camion}, ` +
+            `Conductor: ${conductor.id_conductor}, Admin: ${idAdmin}`
+          );
+  
+          return { 
+            message: 'El viaje fue creado correctamente',
+            data: {
+              id_viaje: viaje.id_viaje,
+              lugar_origen: viaje.lugar_origen,
+              lugar_destino: viaje.lugar_destino,
+              num_manifiesto: viaje.num_manifiesto,
+              fecha_inicio: viaje.fecha_inicio,
+              valor: viaje.valor,
+              estado: viaje.estado,
+              idCamion: camion.id_camion,        
+              idConductor: conductor.id_conductor, 
+            }
+          };
+        } catch (error) {
+          this.logger.error(
+            `Error al crear viaje para admin ${idAdmin}: ${error.message}`,
+            error.stack
+          );
+          throw new InternalServerErrorException('Ocurrió un error al registrar el viaje');
+        }
      }
 }

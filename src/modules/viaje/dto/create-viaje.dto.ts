@@ -29,7 +29,7 @@ export class CreateViajeDto {
   num_manifiesto: string;
 
   @IsDateString({}, { message: 'La fecha de inicio debe ser una fecha válida (YYYY-MM-DD)' })
-  @IsNotEmpty({ message: 'La fecha de inicio es obligatoria' })
+  @IsOptional({})
   fecha_inicio: string;
 
   @IsNumber({ maxDecimalPlaces: 2 }, { message: 'El valor debe ser un número con máximo 2 decimales' })
