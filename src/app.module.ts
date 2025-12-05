@@ -7,6 +7,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CamionModule } from './modules/camion/camion.module';
 import { ConductorModule } from './modules/conductor/conductor.module';
+import { ViajeModule } from './modules/viaje/viaje.module';
 
 @Module({
   imports: [ConfigModule.forRoot({
@@ -23,6 +24,7 @@ import { ConductorModule } from './modules/conductor/conductor.module';
     AuthModule,
     CamionModule,
     ConductorModule,
+    ViajeModule,
    
   ],
   controllers: [AppController],

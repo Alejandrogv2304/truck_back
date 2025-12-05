@@ -1,6 +1,7 @@
 import { Matches, IsString } from 'class-validator';
 import { Admin } from 'src/modules/admin/entities/admin.entity';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Viaje } from 'src/modules/viaje/entities/viaje.entity';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 
 export enum ConductorEstado {
   ACTIVO = 'activo',
@@ -42,4 +43,8 @@ export class Conductor {
   @ManyToOne(() => Admin, (admin) => admin.conductores, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'id_admin' })
   admin: Admin;
+
+  // Relación con Viajes (Un conductor -> Muchos viajes)
+  @OneToMany(() => Viaje, (viaje) => viaje.conductor)
+  viajes: Viaje[];
 }

@@ -7,7 +7,7 @@ import { Admin } from '../admin/entities/admin.entity';
 
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Conductor, Admin]), ],
+  imports: [TypeOrmModule.forFeature([Conductor, Admin]) ],
   controllers: [ConductorController],
   providers: [ConductorService],
   exports: [ConductorService],

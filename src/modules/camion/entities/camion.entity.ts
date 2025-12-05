@@ -1,5 +1,6 @@
 import { Admin } from 'src/modules/admin/entities/admin.entity';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Viaje } from 'src/modules/viaje/entities/viaje.entity';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 
 export enum CamionEstado {
   ACTIVO = 'activo',
@@ -27,6 +28,10 @@ export class Camion {
   //  Relación con Admin
   @ManyToOne(() => Admin, (admin) => admin.camiones, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'id_admin' }) 
-  admin: Admin;  
+  admin: Admin;
+
+  // Relación con Viajes (Un camión -> Muchos viajes)
+  @OneToMany(() => Viaje, (viaje) => viaje.camion)
+  viajes: Viaje[];
 
 }
