@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Viaje } from './entities/viaje.entity';
+import { Viaje, ViajeEstado } from './entities/viaje.entity';
 import { Admin } from '../admin/entities/admin.entity';
 import { Camion } from '../camion/entities/camion.entity';
 import { Conductor } from '../conductor/entities/conductor.entity';
@@ -128,4 +128,52 @@ export class ViajeService {
           throw new InternalServerErrorException('Ocurrió un error al registrar el viaje');
         }
      }
+
+
+     async updateStateViaje(
+                   idViaje: number, 
+                   idAdmin: number
+                 ): Promise<{ message: string; nuevoEstado: ViajeEstado }> {
+                     // 1. Buscar viaje con validación de ownership (multi-tenancy)
+                     const viaje = await this.viajeRepository.findOne({ 
+                       where: { 
+                         id_viaje: idViaje,
+                         admin: { id_admin: idAdmin }  
+                       } 
+                     });
+                 
+                     if (!viaje) {
+                       this.logger.warn(`Intento de actualizar viaje inexistente o no autorizado: ${idViaje} por admin ${idAdmin}`);
+                       throw new NotFoundException(`Viaje con id ${idViaje} no encontrado o no tienes permisos`);
+                     }
+                 
+                     // 2. Actualizar estado (toggle)
+                     try {
+                       const estadoAnterior = viaje.estado;
+                       viaje.estado =
+                         viaje.estado === ViajeEstado.ACTIVO
+                           ? ViajeEstado.INACTIVO
+                           : ViajeEstado.ACTIVO;
+                       
+                       await this.viajeRepository.save(viaje);
+                       
+                       this.logger.log(
+                         `Estado de viaje ${idViaje} actualizado: ${estadoAnterior} → ${viaje.estado} (Admin: ${idAdmin})`
+                       );
+                       
+                       return {
+                         message: `El estado del viaje fue actualizado correctamente`,
+                         nuevoEstado: viaje.estado,
+                       };
+                     } catch (error) {
+                       this.logger.error(
+                         `Error al actualizar estado del viaje ${idViaje}: ${error.message}`,
+                         error.stack
+                       );
+                       throw new InternalServerErrorException(
+                         'Error al actualizar el estado del viaje',
+                       );
+                     }
+                   }
+     
 }
