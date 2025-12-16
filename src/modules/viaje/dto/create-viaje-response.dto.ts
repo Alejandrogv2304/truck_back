@@ -12,3 +12,15 @@ export class CreateViajeResponseDto {
     estado: string;
   };
 }
+
+export class ViajeDataDto {
+  id_viaje: number;
+  valor: number;
+  num_manifiesto: string;
+  lugar_origen: string;
+  lugar_destino: string;
+  camion: string;
+  conductor:string;
+  fecha_inicio: Date;
+  estado: string;
+}

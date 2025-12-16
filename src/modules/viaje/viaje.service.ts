@@ -6,7 +6,9 @@ import { Admin } from '../admin/entities/admin.entity';
 import { Camion } from '../camion/entities/camion.entity';
 import { Conductor } from '../conductor/entities/conductor.entity';
 import { CreateViajeDto } from './dto/create-viaje.dto';
-import { CreateViajeResponseDto } from './dto/create-viaje-response.dto';
+import { CreateViajeResponseDto, ViajeDataDto } from './dto/create-viaje-response.dto';
+import { PaginatedViajesResponseDto } from './dto/paginated-viajes-response.dto';
+import { PaginationQueryDto } from './dto/pagination-query.dto';
 
 @Injectable()
 export class ViajeService {
@@ -175,5 +177,86 @@ export class ViajeService {
                        );
                      }
                    }
-     
+    
+    
+    
+
+    /**
+     * Obtiene todos los viajes con paginación
+     * @param paginationQuery - Parámetros de paginación (page y limit)
+     * @param idAdmin - ID del admin autenticado
+     * @returns Viajes paginados con metadata
+     */
+    async getAllViajes(
+      paginationQuery: PaginationQueryDto,
+      idAdmin: number
+    ): Promise<PaginatedViajesResponseDto> {
+        const { page = 1, limit = 20 } = paginationQuery;
+        
+        this.logger.log(
+          `Consultando viajes del admin ${idAdmin} - Página: ${page}, Límite: ${limit}`
+        );
+        
+        try {
+          // Calcular offset (skip)
+          const skip = (page - 1) * limit;
+          
+          // Contar total de registros (para metadata)
+          const [viajes, total] = await this.viajeRepository.findAndCount({
+            where: { 
+              admin: { id_admin: idAdmin }
+            },
+            relations: ['camion', 'conductor'],  // 👈 Cargar relaciones
+            order: { fecha_inicio: 'DESC' },
+            take: limit,
+            skip: skip
+          });
+    
+          // Calcular metadata de paginación
+          const totalPages = Math.ceil(total / limit);
+          
+          this.logger.log(
+            `Se encontraron ${total} viajes en total, mostrando página ${page}/${totalPages}`
+          );
+          
+          return {
+            data: viajes.map(viaje => this.mapToResponseDto(viaje)),
+            meta: {
+              total,
+              page,
+              limit,
+              totalPages,
+              hasNextPage: page < totalPages,
+              hasPreviousPage: page > 1
+            }
+          };
+          
+        } catch (error) {
+          this.logger.error(
+            `Error al consultar viajes del admin ${idAdmin}: ${error.message}`,
+            error.stack
+          );
+          throw new InternalServerErrorException('Error al obtener la lista de viajes');
+        }
+      }
+    
+      /**
+       * Mapea una entidad Conductor a su DTO de respuesta
+       * @private
+       */
+      private mapToResponseDto(viaje: Viaje): ViajeDataDto {
+        return {
+          id_viaje: viaje.id_viaje,
+          valor: viaje.valor,
+          num_manifiesto: viaje.num_manifiesto,
+          lugar_origen: viaje.lugar_origen,
+          lugar_destino: viaje.lugar_destino,
+          camion: viaje.camion.placa,
+          conductor: viaje.conductor.nombre,
+          fecha_inicio: viaje.fecha_inicio,
+          estado: viaje.estado
+        };
+      }           
+      
+      
 }

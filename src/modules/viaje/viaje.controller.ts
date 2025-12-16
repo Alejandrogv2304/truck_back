@@ -1,7 +1,8 @@
-import { Body, Controller, Param, ParseIntPipe, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ViajeService } from './viaje.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateViajeDto } from './dto/create-viaje.dto';
+import { PaginationQueryDto } from './dto/pagination-query.dto';
 import type { RequestWithUser } from 'src/types/request-with-user.interface';
 
 @Controller('api/v1/viaje')
@@ -27,5 +28,15 @@ export class ViajeController {
              const idAdmin = req.user.sub;
              return await this.viajeService.updateStateViaje(id,idAdmin);
             }
+
+    @UseGuards(JwtAuthGuard)
+    @Get()
+    async getAllViajes(
+      @Query() paginationQuery: PaginationQueryDto,
+      @Req() req: RequestWithUser
+    ) {
+      const idAdmin = req.user.sub;
+      return await this.viajeService.getAllViajes(paginationQuery, idAdmin);
+    }
     
 }
