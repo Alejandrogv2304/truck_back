@@ -4,6 +4,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateViajeDto } from './dto/create-viaje.dto';
 import { PaginationQueryDto } from './dto/pagination-query.dto';
 import type { RequestWithUser } from 'src/types/request-with-user.interface';
+import { UpdateViajeDto } from './dto/update-viaje.dto';
 
 @Controller('api/v1/viaje')
 export class ViajeController {
@@ -38,6 +39,18 @@ export class ViajeController {
       const idAdmin = req.user.sub;
       return await this.viajeService.getAllViajes(paginationQuery, idAdmin);
     }
+
+
+     @UseGuards(JwtAuthGuard)
+             @Patch('/:id')
+                async updateViaje(
+                @Body() updateViajeDto: UpdateViajeDto,
+                @Param('id', ParseIntPipe) idViaje: number,
+                @Req() req: RequestWithUser
+              ) {
+                const idAdmin = req.user.sub;
+                return await this.viajeService.updateViaje(idViaje,updateViajeDto,idAdmin);
+              }
 
 
     @UseGuards(JwtAuthGuard)

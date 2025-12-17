@@ -1,6 +1,6 @@
-import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Not } from 'typeorm';
 import { Viaje, ViajeEstado } from './entities/viaje.entity';
 import { Admin } from '../admin/entities/admin.entity';
 import { Camion } from '../camion/entities/camion.entity';
@@ -9,6 +9,8 @@ import { CreateViajeDto } from './dto/create-viaje.dto';
 import { CreateViajeResponseDto, ViajeDataDto } from './dto/create-viaje-response.dto';
 import { PaginatedViajesResponseDto } from './dto/paginated-viajes-response.dto';
 import { PaginationQueryDto } from './dto/pagination-query.dto';
+import { UpdateViajeDto } from './dto/update-viaje.dto';
+
 
 @Injectable()
 export class ViajeService {
@@ -286,5 +288,40 @@ export class ViajeService {
           this.logger.log(`Viaje ${idViaje} encontrado para admin ${idAdmin}`);
           return this.mapToResponseDto(viaje);
         }
+
+
+
+        async updateViaje(
+  idViaje: number,
+  updateViajeDto: UpdateViajeDto,
+  idAdmin: number
+): Promise<{ message: string; data: Viaje }> {
+  // 1. Buscar viaje con ownership
+  const viaje = await this.viajeRepository.findOne({
+    where: { 
+      id_viaje: idViaje,
+      admin: { id_admin: idAdmin }
+    }
+  });
+
+  if (!viaje) {
+    throw new NotFoundException('Viaje no encontrado o no tienes permisos');
+  }
+
+  // 2. Actualizar solo los campos enviados
+  Object.assign(viaje, updateViajeDto);
+
+  // 3. Guardar
+  const viajeActualizado = await this.viajeRepository.save(viaje);
+
+  this.logger.log(`Viaje ${idViaje} actualizado por admin ${idAdmin}`);
+
+  return {
+    message: 'Viaje actualizado correctamente',
+    data: viajeActualizado
+  };
+}
+
+
       
 }
