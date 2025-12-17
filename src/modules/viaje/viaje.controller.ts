@@ -38,5 +38,16 @@ export class ViajeController {
       const idAdmin = req.user.sub;
       return await this.viajeService.getAllViajes(paginationQuery, idAdmin);
     }
+
+
+    @UseGuards(JwtAuthGuard)
+          @Get('/:id')
+          async getOneViaje(
+          @Param('id', ParseIntPipe) id: number,
+          @Req() req: RequestWithUser
+          ) {
+          const idAdmin = req.user.sub;
+          return await this.viajeService.getOneViaje(id,idAdmin);
+           }
     
 }

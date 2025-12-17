@@ -206,7 +206,7 @@ export class ViajeService {
             where: { 
               admin: { id_admin: idAdmin }
             },
-            relations: ['camion', 'conductor'],  // 👈 Cargar relaciones
+            relations: ['camion', 'conductor'],  
             order: { fecha_inicio: 'DESC' },
             take: limit,
             skip: skip
@@ -258,5 +258,33 @@ export class ViajeService {
         };
       }           
       
+
+
+      /**
+         * Obtiene un viaje específico por ID
+         * @param idViaje - ID del viaje
+         * @param idAdmin - ID del admin autenticado (ownership)
+         * @returns Datos del viaje
+         */
+        async getOneViaje(idViaje: number, idAdmin: number): Promise<ViajeDataDto> {
+          this.logger.log(`Consultando viaje ${idViaje} del admin ${idAdmin}`);
+      
+          const viaje = await this.viajeRepository.findOne({
+            where: { 
+              id_viaje: idViaje,
+              admin: { id_admin: idAdmin } ,
+            
+            },
+            relations: ['camion', 'conductor'] 
+          });
+      
+          if (!viaje) {
+            this.logger.warn(`Viaje ${idViaje} no encontrado o no pertenece al admin ${idAdmin}`);
+            throw new NotFoundException('No se encontraron los datos de ese viaje');
+          }
+      
+          this.logger.log(`Viaje ${idViaje} encontrado para admin ${idAdmin}`);
+          return this.mapToResponseDto(viaje);
+        }
       
 }
