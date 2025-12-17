@@ -31,6 +31,16 @@ export class ConductorController {
             return await this.conductorService.getAllConductores(idAdmin);
           }
 
+      @UseGuards(JwtAuthGuard)
+           @Get('/select')
+            async getConductoresIdAndName(
+            @Req() req: RequestWithUser
+          ) {
+            
+            const idAdmin = req.user.sub;
+            return await this.conductorService.getAllConductoresIdAndName(idAdmin);
+          }
+
 
      @UseGuards(JwtAuthGuard)
          @Patch(':id/change-state')

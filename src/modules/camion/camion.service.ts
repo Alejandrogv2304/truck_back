@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Camion, CamionEstado } from './entities/camion.entity';
 import { FindOptionsWhere, Not, Repository } from 'typeorm';
 import { CreateCamionDto } from './dto/create-camion.dto';
-import { CreateCamionResponseDto, ResponseGetCamionesDto } from './dto/create-response.dto';
+import { CamionSelectDto, CreateCamionResponseDto, ResponseGetCamionesDto } from './dto/create-response.dto';
 import { Admin } from '../admin/entities/admin.entity';
 import { UpdateCamionDto } from './dto/update-camion.dto';
 
@@ -66,7 +66,34 @@ export class CamionService {
           estado: camion.estado,
       };
   }
+
+    private mapToResponseSelectDto(camion: Camion): CamionSelectDto {
+      return {
+          id_camion: camion.id_camion,
+          placa: camion.placa,
+      };
+  }
   
+
+
+    async getAllCamionesIdAndPlaca(id_admin:number):Promise<CamionSelectDto[]>{
+        const camiones = await this.camionRepository.find({
+          where:  { admin: {
+                id_admin: id_admin, 
+            }, 
+         },
+         select:['id_camion', 'placa']
+        })
+
+        if(camiones.length === 0){
+         throw new NotFoundException('No se encontraron camiones asociados a este admin')
+        }
+
+        return camiones.map(camion => this.mapToResponseSelectDto(camion));
+        }
+
+
+
   //Método para obtener un camión según su id
   async getOneCamion(id_camion: number):Promise<ResponseGetCamionesDto>{
 

@@ -29,6 +29,15 @@ export class CamionController {
         return await this.camionService.getAllCamiones(id);
       }
 
+       @UseGuards(JwtAuthGuard)
+       @Get('/select')
+        async getCamionesIdAndPlaca(
+        @Req() req: RequestWithUser
+      ) {
+        const id = req.user.sub;
+        return await this.camionService.getAllCamionesIdAndPlaca(id);
+      }
+
       
 
      @UseGuards(JwtAuthGuard)

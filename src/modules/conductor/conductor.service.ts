@@ -5,7 +5,7 @@ import { FindOptionsWhere, Not, Repository } from 'typeorm';
 import { Admin } from '../admin/entities/admin.entity';
 import { CreateConductorDto } from './dto/create-conductor.dto';
 import { UpdateConductorDto } from './dto/update-conductor.dto';
-import { ConductorDataDto, CreateConductorResponseDto } from './dto/create-conductor-response.dto';
+import { ConductorDataDto, ConductorSelectDto, CreateConductorResponseDto } from './dto/create-conductor-response.dto';
 
 @Injectable()
 export class ConductorService {
@@ -145,7 +145,7 @@ export class ConductorService {
         where: { 
           admin: { id_admin: idAdmin }
         },
-        order: { fecha_vinculacion: 'DESC' }
+        order: { fecha_vinculacion: 'DESC' },
       });
 
       if (conductores.length === 0) {
@@ -165,6 +165,48 @@ export class ConductorService {
     }
   }
 
+
+  async getAllConductoresIdAndName(idAdmin: number): Promise<ConductorSelectDto[]> {
+    this.logger.log(`Consultando conductores del admin ${idAdmin}`);
+    
+    try {
+      const conductores = await this.conductorRepository.find({
+        where: { 
+          admin: { id_admin: idAdmin }
+        },
+        order: { fecha_vinculacion: 'DESC' },
+        select:['id_conductor', 'nombre', 'apellido']
+      });
+
+      if (conductores.length === 0) {
+        this.logger.log(`Admin ${idAdmin} no tiene conductores registrados`);
+        return [];
+      }
+
+      this.logger.log(`Se encontraron ${conductores.length} conductores para admin ${idAdmin}`);
+      return conductores.map(conductor => this.mapToResponseSelectDto(conductor));
+      
+    } catch (error) {
+      this.logger.error(
+        `Error al consultar conductores del admin ${idAdmin}: ${error.message}`,
+        error.stack
+      );
+      throw new InternalServerErrorException('Error al obtener la lista de conductores');
+    }
+  }
+
+
+  /**
+   * Mapea una entidad Conductor a su DTO de respuesta para el select
+   * @private
+   */
+  private mapToResponseSelectDto(conductor: Conductor): ConductorSelectDto {
+    return {
+      id_conductor: conductor.id_conductor,
+      nombre: conductor.nombre,
+      apellido: conductor.apellido,
+    };
+  }   
   /**
    * Mapea una entidad Conductor a su DTO de respuesta
    * @private

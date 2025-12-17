@@ -21,4 +21,10 @@ export class ConductorDataDto {
   estado: string;
 }
 
+export class ConductorSelectDto{
+  id_conductor: number;
+  nombre: string;
+  apellido: string;
+}
+
 

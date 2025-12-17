@@ -11,3 +11,8 @@ export class ResponseGetCamionesDto{
   modelo:string;
   estado: CamionEstado;
 }
+
+export class CamionSelectDto{
+  id_camion:number;
+  placa:string;
+}
