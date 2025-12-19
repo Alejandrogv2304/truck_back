@@ -8,6 +8,9 @@ import { AuthModule } from './modules/auth/auth.module';
 import { CamionModule } from './modules/camion/camion.module';
 import { ConductorModule } from './modules/conductor/conductor.module';
 import { ViajeModule } from './modules/viaje/viaje.module';
+import { GatosViajeModule } from './modules/gatos_viaje/gatos_viaje.module';
+import { GastosViajeController } from './modules/gastos_viaje/gastos_viaje.controller';
+import { GastosViajeModule } from './modules/gastos_viaje/gastos_viaje.module';
 
 @Module({
   imports: [ConfigModule.forRoot({
@@ -25,9 +28,11 @@ import { ViajeModule } from './modules/viaje/viaje.module';
     CamionModule,
     ConductorModule,
     ViajeModule,
+    GatosViajeModule,
+    GastosViajeModule,
    
   ],
-  controllers: [AppController],
+  controllers: [AppController, GastosViajeController],
   providers: [AppService],
 })
 export class AppModule {}

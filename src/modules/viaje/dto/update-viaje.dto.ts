@@ -37,5 +37,5 @@ export class UpdateViajeDto {
 
   // NOTA: num_manifiesto, fecha_inicio, idCamion, idConductor 
   // NO están incluidos por seguridad/integridad de datos
-  // Si necesitas cambiarlos, crea endpoints específicos con validaciones adicionales
+ 
 }
