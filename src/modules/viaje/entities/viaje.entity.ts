@@ -2,7 +2,8 @@ import { Matches, IsString } from 'class-validator';
 import { Admin } from 'src/modules/admin/entities/admin.entity';
 import { Camion } from 'src/modules/camion/entities/camion.entity';
 import { Conductor } from 'src/modules/conductor/entities/conductor.entity';
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { GastosViaje } from 'src/modules/gastos_viaje/entities/gastos_viaje.entity';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 
 export enum ViajeEstado {
   ACTIVO = 'activo',
@@ -56,5 +57,7 @@ export class Viaje {
   @JoinColumn({ name: 'id_conductor' })
   conductor: Conductor;
 
+  @OneToMany(() => GastosViaje, (gastosViaje) => gastosViaje.viaje)
+  gastos_viaje: GastosViaje[];
   
 }

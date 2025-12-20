@@ -1,7 +1,5 @@
-import { Matches, IsString } from 'class-validator';
 import { Admin } from 'src/modules/admin/entities/admin.entity';
-import { Camion } from 'src/modules/camion/entities/camion.entity';
-import { Conductor } from 'src/modules/conductor/entities/conductor.entity';
+import { Viaje } from 'src/modules/viaje/entities/viaje.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 
 export enum gastosViajeEstado {
@@ -18,11 +16,10 @@ export enum tipoGastosViaje {
 
 @Entity('gastos_viaje')
 export class GastosViaje {
-  @PrimaryGeneratedColumn({ name: 'id_gastos_viaje' })
-  id_gastos_viaje: number;
+  @PrimaryGeneratedColumn({ name: 'id_gasto_viaje' })
+  id_gasto_viaje: number;
 
   
-
  
   @Column({
     type: 'decimal',
@@ -42,25 +39,21 @@ export class GastosViaje {
 
    @Column({
     type: 'enum',
-    enum: gastosViajeEstado,
-    default: gastosViajeEstado.ACTIVO,
+    enum: tipoGastosViaje,
+    default: tipoGastosViaje.otro,
   })
-  tipo_gasto: gastosViajeEstado;
+  tipo_gasto: tipoGastosViaje;
 
   // Relación con Admin
-  @ManyToOne(() => Admin, (admin) => admin.viajes, { onDelete: 'RESTRICT' })
+  @ManyToOne(() => Admin, (admin) => admin.gastos_viaje, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'id_admin' })
   admin: Admin;
 
-  // Relación con Camion (Muchos viajes -> Un camión)
-  @ManyToOne(() => Camion, (camion) => camion.viajes, { onDelete: 'RESTRICT' })
-  @JoinColumn({ name: 'id_camion' })
-  camion: Camion;
+  // Relación con Viaje (Muchos gastos -> Un viaje)
+  @ManyToOne(() => Viaje, (viaje) => viaje.gastos_viaje, { onDelete: 'RESTRICT' })
+  @JoinColumn({ name: 'id_viaje' })
+  viaje: Viaje;
 
-  // Relación con Conductor (Muchos viajes -> Un conductor)
-  @ManyToOne(() => Conductor, (conductor) => conductor.viajes, { onDelete: 'RESTRICT' })
-  @JoinColumn({ name: 'id_conductor' })
-  conductor: Conductor;
 
   
 }
