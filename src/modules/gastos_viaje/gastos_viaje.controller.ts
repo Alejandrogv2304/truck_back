@@ -1,4 +1,4 @@
-import { Body, Controller, Param, ParseIntPipe, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Param, ParseIntPipe, Post, Req, UseGuards } from '@nestjs/common';
 import { GastosViajeService } from './gastos_viaje.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CreateGastoViajeDto } from './dto/create-gasto-viaje.dto';
@@ -20,6 +20,15 @@ export class GastosViajeController {
                     return await this.gastosViajeService.createGastoViaje(createGastoViajeDto,idAdmin, idViaje);
                   }
     
-
+     
+    @UseGuards(JwtAuthGuard)
+                 @Delete('/:idGastoViaje')
+                    async deleteGastoViaje(
+                    @Req() req: RequestWithUser,
+                    @Param('idGastoViaje', ParseIntPipe) idGastoViaje: number
+                  ) {
+                    const idAdmin = req.user.sub;
+                    return await this.gastosViajeService.deleteGastoViaje(idAdmin, idGastoViaje);
+                  }
 
 }

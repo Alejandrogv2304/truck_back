@@ -97,5 +97,60 @@ export class GastosViajeService {
                  }
               }
          
-         
+         /**
+          * Elimina permanentemente un gasto de viaje verificando permisos
+          * @param idAdmin - ID del admin autenticado
+          * @param idGastoViaje - ID del gasto a eliminar
+          * @returns Confirmación de eliminación con filas afectadas
+          */
+         async deleteGastoViaje(
+          idAdmin: number,
+          idGastoViaje: number
+         ) {
+          this.logger.log(`Eliminando el gasto de viaje ${idGastoViaje} para admin ${idAdmin}`);
+
+          try {
+            // 1. Validar que el gasto existe y pertenece al admin
+            const gastoViaje = await this.gastosViajeRepository.findOne({
+              where: { 
+                id_gasto_viaje: idGastoViaje,
+                admin: { id_admin: idAdmin }
+              },
+              relations: ['admin']
+            });
+
+            if (!gastoViaje) {
+              this.logger.warn(`Gasto de viaje ${idGastoViaje} no encontrado o no pertenece al admin ${idAdmin}`);
+              throw new NotFoundException('Gasto de viaje no encontrado o no tienes permisos');
+            }
+
+            // 2. Eliminar permanentemente el gasto
+            const result = await this.gastosViajeRepository.delete(idGastoViaje);
+
+            if (result.affected === 0) {
+              throw new InternalServerErrorException('No se pudo eliminar el gasto de viaje');
+            }
+
+            this.logger.log(
+              `Gasto de viaje eliminado exitosamente: ID ${idGastoViaje}, Admin: ${idAdmin}`
+            );
+
+            return {
+              message: 'El gasto de viaje fue eliminado correctamente',
+              data: {
+                id_gasto_viaje: idGastoViaje,
+                affected: result.affected
+              }
+            };
+          } catch (error) {
+            if (error instanceof NotFoundException) {
+              throw error;
+            }
+            this.logger.error(
+              `Error al eliminar gasto de viaje ${idGastoViaje} para admin ${idAdmin}: ${error.message}`,
+              error.stack
+            );
+            throw new InternalServerErrorException('Ocurrió un error al eliminar el gasto de viaje');
+          }
+         }
 }
