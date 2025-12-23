@@ -5,7 +5,7 @@ import { Repository } from 'typeorm';
 import { Admin } from '../admin/entities/admin.entity';
 import { GastosViaje } from './entities/gastos_viaje.entity';
 import { CreateGastoViajeDto } from './dto/create-gasto-viaje.dto';
-import { CreateGastoViajeResponseDto } from './dto/create-gasto-response.dto';
+import { CreateGastoViajeResponseDto, GastoViajeGetResponse } from './dto/create-gasto-response.dto';
 
 @Injectable()
 export class GastosViajeService {
@@ -153,4 +153,49 @@ export class GastosViajeService {
             throw new InternalServerErrorException('Ocurrió un error al eliminar el gasto de viaje');
           }
          }
+
+
+
+         async getAllGastosViaje(
+          idAdmin:number,
+          idViaje:number
+         ){
+          this.logger.log(`Obteniendo todos los gastos de viaje para el viaje ${idViaje} y admin ${idAdmin}`);
+
+
+          try{
+          const gastosViaje = await this.gastosViajeRepository.find({
+        where: { 
+          viaje: { id_viaje: idViaje }
+        },
+        order: { id_gasto_viaje: 'DESC' },
+        select:['id_gasto_viaje', 'valor', 'estado', 'tipo_gasto']
+      });
+
+      if (gastosViaje.length === 0) {
+        this.logger.log(`Viaje ${idAdmin} no tiene gastos registrados`);
+        return [];
+      }
+
+      this.logger.log(`Se encontraron ${gastosViaje.length} gastos para el viaje ${idViaje}`);
+      return gastosViaje.map(gasto => this.mapToResponseGastoDto(gasto));
+      
+    }catch(error){
+      this.logger.error(
+        `Error al consultar los gastos de este viaje ${idViaje}: ${error.message}`,
+        error.stack
+      );
+      throw new InternalServerErrorException('Error al obtener la lista de gastos');
+    }
+         }
+
+
+          private mapToResponseGastoDto(gasto: GastosViaje): GastoViajeGetResponse {
+             return {
+               id_gasto_viaje: gasto.id_gasto_viaje,
+               valor: gasto.id_gasto_viaje,
+               tipo_gasto:gasto.tipo_gasto,
+               estado:gasto.estado
+             };
+           }   
 }
