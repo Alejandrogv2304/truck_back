@@ -193,7 +193,7 @@ export class GastosViajeService {
           private mapToResponseGastoDto(gasto: GastosViaje): GastoViajeGetResponse {
              return {
                id_gasto_viaje: gasto.id_gasto_viaje,
-               valor: gasto.id_gasto_viaje,
+               valor: gasto.valor,
                tipo_gasto:gasto.tipo_gasto,
                estado:gasto.estado
              };
