@@ -10,6 +10,7 @@ import { ConductorModule } from './modules/conductor/conductor.module';
 import { ViajeModule } from './modules/viaje/viaje.module';
 import { GastosViajeController } from './modules/gastos_viaje/gastos_viaje.controller';
 import { GastosViajeModule } from './modules/gastos_viaje/gastos_viaje.module';
+import { GastosCamionModule } from './modules/gastos_camion/gastos_camion.module';
 
 @Module({
   imports: [ConfigModule.forRoot({
@@ -28,6 +29,7 @@ import { GastosViajeModule } from './modules/gastos_viaje/gastos_viaje.module';
     ConductorModule,
     ViajeModule,
     GastosViajeModule,
+    GastosCamionModule,
    
   ],
   controllers: [AppController, GastosViajeController],

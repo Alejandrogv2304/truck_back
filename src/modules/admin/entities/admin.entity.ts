@@ -1,5 +1,6 @@
 import { Camion } from 'src/modules/camion/entities/camion.entity';
 import { Conductor } from 'src/modules/conductor/entities/conductor.entity';
+import { GastosCamion } from 'src/modules/gastos_camion/entities/gastos_camion.entity';
 import { GastosViaje } from 'src/modules/gastos_viaje/entities/gastos_viaje.entity';
 import { Viaje } from 'src/modules/viaje/entities/viaje.entity';
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
@@ -47,5 +48,9 @@ export class Admin {
    // Relación con Gastos de Viajes
   @OneToMany(() => GastosViaje, (gastosViaje) => gastosViaje.admin)
   gastos_viaje: GastosViaje[];
+
+  // Relación con Gastos de Camion
+  @OneToMany(() => GastosCamion, (gastosCamion) => gastosCamion.admin)
+  gastos_camion: GastosCamion[];
 
 }

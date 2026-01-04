@@ -1,4 +1,5 @@
 import { Admin } from 'src/modules/admin/entities/admin.entity';
+import { GastosCamion } from 'src/modules/gastos_camion/entities/gastos_camion.entity';
 import { Viaje } from 'src/modules/viaje/entities/viaje.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 
@@ -33,5 +34,9 @@ export class Camion {
   // Relación con Viajes (Un camión -> Muchos viajes)
   @OneToMany(() => Viaje, (viaje) => viaje.camion)
   viajes: Viaje[];
+
+   // Relación con Gastos (Un camión -> Muchos gastos)
+  @OneToMany(() => GastosCamion, (gastosCamion) => gastosCamion.camion)
+  gastos_camion: GastosCamion[];
 
 }
