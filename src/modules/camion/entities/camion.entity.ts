@@ -26,6 +26,9 @@ export class Camion {
   })
   estado: CamionEstado;
 
+  @Column({ name: 'id_admin' })
+  id_admin: number;
+
   //  Relación con Admin
   @ManyToOne(() => Admin, (admin) => admin.camiones, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'id_admin' }) 

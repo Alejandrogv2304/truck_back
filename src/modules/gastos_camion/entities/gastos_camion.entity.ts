@@ -2,10 +2,7 @@ import { Admin } from 'src/modules/admin/entities/admin.entity';
 import { Camion } from 'src/modules/camion/entities/camion.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 
-export enum gastosCamionEstado {
-  ACTIVO = 'activo',
-  INACTIVO = 'inactivo',
-}
+
 
 export enum tipoGastosCamion {
   seguros = 'seguros',
