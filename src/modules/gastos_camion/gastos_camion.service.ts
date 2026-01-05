@@ -5,7 +5,9 @@ import { Repository } from 'typeorm';
 import { Admin } from '../admin/entities/admin.entity';
 import { Camion } from '../camion/entities/camion.entity';
 import { CreateGastoCamionDto } from './dto/create-gasto-camion.dto';
-import { CreateGastoCamionResponseDto } from './dto/create-gasto-camin-response.dto';
+import { CreateGastoCamionResponseDto, GastoCamionResponseDto } from './dto/create-gasto-camin-response.dto';
+import { PaginationQueryDto } from './dto/pagination-query.dto';
+import { PaginatedGastosCamionResponseDto } from './dto/paginated-gastos-camion-response.dto';
 
 @Injectable()
 export class GastosCamionService {
@@ -143,5 +145,93 @@ export class GastosCamionService {
           }
          }
 
+ /**
+   * Obtiene todos los gastos de camión con paginación y filtro opcional por placa
+   * @param paginationQuery - Parámetros de paginación (page, limit y placa opcional)
+   * @param idAdmin - ID del admin autenticado
+   * @returns Gastos de camión paginados con metadata
+   */
+  async findAllGastosCamion(
+    paginationQuery: PaginationQueryDto,
+    idAdmin: number
+  ): Promise<PaginatedGastosCamionResponseDto> {
+    const { page = 1, limit = 15, placa } = paginationQuery;
+    
+    this.logger.log(
+      `Consultando gastos de camión del admin ${idAdmin} - Página: ${page}, Límite: ${limit}${placa ? `, Placa: ${placa}` : ''}`
+    );
+    
+    try {
+      // Calcular offset (skip)
+      const skip = (page - 1) * limit;
+      
+      // Construir query con filtros
+      const queryBuilder = this.gastosCamionRepository
+        .createQueryBuilder('gasto_camion')
+        .leftJoinAndSelect('gasto_camion.camion', 'camion')
+        .where('gasto_camion.id_admin = :idAdmin', { idAdmin });
+
+      // Aplicar filtro por placa si se proporciona
+      if (placa) {
+        queryBuilder.andWhere('camion.placa ILIKE :placa', { 
+          placa: `%${placa}%` 
+        });
+      }
+
+      // Ordenar por fecha descendente (más recientes primero)
+      queryBuilder.orderBy('gasto_camion.fecha', 'DESC');
+
+      // Contar total de registros (para metadata)
+      const total = await queryBuilder.getCount();
+      
+      // Aplicar paginación
+      const gastosCamion = await queryBuilder
+        .skip(skip)
+        .take(limit)
+        .getMany();
+
+      // Calcular metadata de paginación
+      const totalPages = Math.ceil(total / limit);
+      
+      this.logger.log(
+        `Se encontraron ${total} gastos de camión en total, mostrando página ${page}/${totalPages}`
+      );
+      
+      return {
+        data: gastosCamion.map(gasto => this.mapToResponseDto(gasto)),
+        meta: {
+          total,
+          page,
+          limit,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPreviousPage: page > 1
+        }
+      };
+      
+    } catch (error) {
+      this.logger.error(
+        `Error al consultar gastos de camión del admin ${idAdmin}: ${error.message}`,
+        error.stack
+      );
+      throw new InternalServerErrorException('Error al obtener la lista de gastos de camión');
+    }
+  }
+
+  /**
+   * Mapea una entidad GastosCamion a su DTO de respuesta
+   * @private
+   */
+  private mapToResponseDto(gasto: GastosCamion): GastoCamionResponseDto {
+    return {
+      id_gasto_camion: gasto.id_gasto_camion,
+      valor: gasto.valor,
+      tipo_gasto: gasto.tipo_gasto,
+      descripcion: gasto.descripcion,
+      fecha: gasto.fecha,
+      id_camion: gasto.id_camion,
+      id_admin: gasto.id_admin
+    };
+  }
 
 }
