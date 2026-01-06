@@ -74,6 +74,19 @@ export class ViajeController {
 
 
     @UseGuards(JwtAuthGuard)
+          @Get('/estadisticas/informe/:idCamion/:mes/:anio')
+          async getEstadisticasInformes(
+          @Param('idCamion', ParseIntPipe) idCamion: number,
+          @Param('mes', ParseIntPipe) mes: number,
+          @Param('anio', ParseIntPipe) anio: number,
+          @Req() req: RequestWithUser
+          ) {
+          const idAdmin = req.user.sub;
+          return await this.viajeService.getEstadisticasInformes(idAdmin, mes, anio, idCamion);
+           }
+
+
+    @UseGuards(JwtAuthGuard)
           @Get('/:id')
           async getOneViaje(
           @Param('id', ParseIntPipe) id: number,

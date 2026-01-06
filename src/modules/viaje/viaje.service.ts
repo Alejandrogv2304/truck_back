@@ -1,17 +1,18 @@
 import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not } from 'typeorm';
+import { Repository, Not, Between } from 'typeorm';
 import { Viaje, ViajeEstado } from './entities/viaje.entity';
 import { Admin } from '../admin/entities/admin.entity';
 import { Camion } from '../camion/entities/camion.entity';
 import { Conductor } from '../conductor/entities/conductor.entity';
+import { GastosCamion } from '../gastos_camion/entities/gastos_camion.entity';
 import { CreateViajeDto } from './dto/create-viaje.dto';
 import { CreateViajeResponseDto, ViajeDataDto } from './dto/create-viaje-response.dto';
 import { PaginatedViajesResponseDto } from './dto/paginated-viajes-response.dto';
 import { PaginationQueryDto } from './dto/pagination-query.dto';
 import { UpdateViajeDto } from './dto/update-viaje.dto';
 import { EstadisticasViajesDto } from './dto/estadisticas-dto';
-import { EstadisticasGraficasResponseDto, EstadisticasMesDto } from './dto/estadisticas-graficas.dto';
+import { EstadisticasGraficasResponseDto, EstadisticasMesDto, InformeMensualDto, DetalleViajeInformeDto } from './dto/estadisticas-graficas.dto';
 
 
 @Injectable()
@@ -26,6 +27,8 @@ export class ViajeService {
          private readonly camionRepository: Repository<Camion>,
          @InjectRepository(Conductor)
          private readonly conductorRepository: Repository<Conductor>,
+         @InjectRepository(GastosCamion)
+         private readonly gastosCamionRepository: Repository<GastosCamion>,
      ){}
 
      /**
@@ -437,5 +440,125 @@ export class ViajeService {
     this.logger.log(`Estadísticas gráficas calculadas para ${data.length} meses`);
 
     return { data };
+   }   
+
+
+
+
+
+   /**
+    * Obtiene informe detallado de viajes de un mes específico para un camión
+    * @param idAdmin - ID del admin autenticado
+    * @param mes - Mes en formato 1-12 (1=Enero, 12=Diciembre)
+    * @param anio - Año del informe
+    * @param idCamion - ID del camión para filtrar los viajes
+    * @returns Informe mensual con balance y detalle de cada viaje del camión
+    */
+   async getEstadisticasInformes(
+     idAdmin: number, 
+     mes: number, 
+     anio: number,
+     idCamion: number
+   ): Promise<InformeMensualDto> {
+     this.logger.log(`Obteniendo informe mensual para admin ${idAdmin} - Mes: ${mes}/${anio} - Camión: ${idCamion}`);
+
+     const mesesNombres = [
+       'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+     ];
+
+     // Validar mes
+     if (mes < 1 || mes > 12) {
+       throw new BadRequestException('El mes debe estar entre 1 y 12');
+     }
+
+     // Validar que el camión existe y pertenece al admin
+     const camion = await this.camionRepository.findOne({
+       where: { 
+         id_camion: idCamion,
+         admin: { id_admin: idAdmin }
+       }
+     });
+
+     if (!camion) {
+       this.logger.warn(`Camión ${idCamion} no encontrado o no pertenece al admin ${idAdmin}`);
+       throw new NotFoundException('Camión no encontrado o no tienes permisos');
+     }
+
+     // Calcular fechas de inicio y fin del mes
+     const mesInicio = new Date(anio, mes - 1, 1);
+     const mesFin = new Date(anio, mes, 0, 23, 59, 59, 999);
+
+     // Obtener todos los viajes del mes para el camión específico
+     const viajes = await this.viajeRepository.find({
+       where: {
+         admin: { id_admin: idAdmin },
+         camion: { id_camion: idCamion },
+         fecha_inicio: Between(mesInicio, mesFin)
+       },
+       relations: ['camion', 'conductor', 'gastos_viaje'],
+       order: { fecha_inicio: 'ASC' }
+     });
+
+     // Obtener todos los gastos del camión en el período del mes (se calcula una sola vez)
+     const gastosCamionMes = await this.gastosCamionRepository
+       .createQueryBuilder('gastos_camion')
+       .select('COALESCE(SUM(gastos_camion.valor), 0)', 'total')
+       .where('gastos_camion.id_camion = :idCamion', { idCamion })
+       .andWhere('gastos_camion.fecha >= :mesInicio', { mesInicio })
+       .andWhere('gastos_camion.fecha <= :mesFin', { mesFin })
+       .getRawOne();
+
+     const totalGastosCamionMes = Number(gastosCamionMes?.total) || 0;
+
+     let ingresosTotales = 0;
+     let egresosTotales = 0;
+     const detalleViajes: DetalleViajeInformeDto[] = [];
+
+     // Procesar cada viaje
+     for (const viaje of viajes) {
+       // Calcular gastos de viaje
+       const gastosViaje = viaje.gastos_viaje
+         ?.filter(g => g.estado === 'activo')
+         .reduce((sum, g) => sum + Number(g.valor), 0) || 0;
+
+       const valorViaje = Number(viaje.valor) || 0;
+       // Los gastos de camión se distribuyen proporcionalmente entre los viajes del mes
+       const gastosCamionPorViaje = viajes.length > 0 ? totalGastosCamionMes / viajes.length : 0;
+       const balanceViaje = valorViaje - (gastosViaje + gastosCamionPorViaje);
+
+       ingresosTotales += valorViaje;
+       egresosTotales += (gastosViaje + gastosCamionPorViaje);
+
+       detalleViajes.push({
+         id_viaje: viaje.id_viaje,
+         num_manifiesto: viaje.num_manifiesto,
+         lugar_origen: viaje.lugar_origen,
+         lugar_destino: viaje.lugar_destino,
+         fecha_inicio: viaje.fecha_inicio,
+         camion: viaje.camion.placa,
+         conductor: viaje.conductor.nombre,
+         valor_viaje: valorViaje,
+         gastos_viaje: gastosViaje,
+         gastos_camion: gastosCamionPorViaje,
+         balance_viaje: balanceViaje
+       });
+     }
+
+     const balanceTotal = ingresosTotales - egresosTotales;
+
+     this.logger.log(
+       `Informe mensual calculado para camión ${camion.placa}: ${viajes.length} viajes, ` 
+     );
+
+     return {
+       mes: mesesNombres[mes - 1],
+       anio: anio,
+       total_viajes: viajes.length,
+       ingresos_totales: ingresosTotales,
+       egresos_totales: egresosTotales,
+       balance_total: balanceTotal,
+       detalle_viajes: detalleViajes
+     };
    }   
 }

@@ -6,3 +6,28 @@ export class EstadisticasMesDto {
 export class EstadisticasGraficasResponseDto {
     data: EstadisticasMesDto[];
 }
+
+// DTOs para informe mensual detallado
+export class DetalleViajeInformeDto {
+    id_viaje: number;
+    num_manifiesto: string;
+    lugar_origen: string;
+    lugar_destino: string;
+    fecha_inicio: Date;
+    camion: string;
+    conductor: string;
+    valor_viaje: number;
+    gastos_viaje: number;
+    gastos_camion: number;
+    balance_viaje: number;
+}
+
+export class InformeMensualDto {
+    mes: string;
+    anio: number;
+    total_viajes: number;
+    ingresos_totales: number;
+    egresos_totales: number;
+    balance_total: number;
+    detalle_viajes: DetalleViajeInformeDto[];
+}

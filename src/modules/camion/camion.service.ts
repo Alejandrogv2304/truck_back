@@ -81,6 +81,7 @@ export class CamionService {
           where:  { admin: {
                 id_admin: id_admin, 
             }, 
+            estado: CamionEstado.ACTIVO
          },
          select:['id_camion', 'placa']
         })
