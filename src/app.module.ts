@@ -20,8 +20,9 @@ import { GastosCamionModule } from './modules/gastos_camion/gastos_camion.module
       type: 'postgres',
       url: process.env.DATABASE_URL,
       autoLoadEntities: true,
-      synchronize: true, 
+      synchronize: process.env.NODE_ENV !== 'production', // ⚠️ CRÍTICO: Nunca sincronizar en producción
       ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+      logging: process.env.NODE_ENV === 'development',
     }),
     AdminModule,
     AuthModule,
