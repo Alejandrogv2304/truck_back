@@ -11,6 +11,7 @@ import { PaginatedViajesResponseDto } from './dto/paginated-viajes-response.dto'
 import { PaginationQueryDto } from './dto/pagination-query.dto';
 import { UpdateViajeDto } from './dto/update-viaje.dto';
 import { EstadisticasViajesDto } from './dto/estadisticas-dto';
+import { EstadisticasGraficasResponseDto, EstadisticasMesDto } from './dto/estadisticas-graficas.dto';
 
 
 @Injectable()
@@ -375,5 +376,66 @@ export class ViajeService {
       ingresos: ingresos,
       egresos: egresos
     };
+   }   
+
+
+   async getEstadisticasGraficas(idAdmin: number): Promise<EstadisticasGraficasResponseDto> {
+    this.logger.log(`Obteniendo estadísticas gráficas mensuales para admin ${idAdmin}`);
+
+    const data: EstadisticasMesDto[] = [];
+    const mesesNombres = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    const ahora = new Date();
+
+    // Obtener datos de los últimos 6 meses
+    for (let i = 5; i >= 0; i--) {
+      const fechaMes = new Date(ahora.getFullYear(), ahora.getMonth() - i, 1);
+      const mesInicio = new Date(fechaMes.getFullYear(), fechaMes.getMonth(), 1);
+      const mesFin = new Date(fechaMes.getFullYear(), fechaMes.getMonth() + 1, 0, 23, 59, 59, 999);
+
+      // Calcular ingresos del mes (suma de valores de viajes)
+      const ingresosResult = await this.viajeRepository
+        .createQueryBuilder('viaje')
+        .select('COALESCE(SUM(viaje.valor), 0)', 'total')
+        .where('viaje.id_admin = :idAdmin', { idAdmin })
+        .andWhere('viaje.fecha_inicio >= :mesInicio', { mesInicio })
+        .andWhere('viaje.fecha_inicio <= :mesFin', { mesFin })
+        .getRawOne();
+
+      // Calcular gastos de viaje del mes
+      const gastosViajeResult = await this.viajeRepository
+        .createQueryBuilder('viaje')
+        .leftJoin('viaje.gastos_viaje', 'gastos_viaje')
+        .select('COALESCE(SUM(gastos_viaje.valor), 0)', 'total')
+        .where('viaje.id_admin = :idAdmin', { idAdmin })
+        .andWhere('viaje.fecha_inicio >= :mesInicio', { mesInicio })
+        .andWhere('viaje.fecha_inicio <= :mesFin', { mesFin })
+        .getRawOne();
+
+      // Calcular gastos de camión del mes (de los camiones que tienen viajes en ese mes)
+      const gastosCamionResult = await this.viajeRepository
+        .createQueryBuilder('viaje')
+        .leftJoin('viaje.camion', 'camion')
+        .leftJoin('camion.gastos_camion', 'gastos_camion')
+        .select('COALESCE(SUM(gastos_camion.valor), 0)', 'total')
+        .where('viaje.id_admin = :idAdmin', { idAdmin })
+        .andWhere('viaje.fecha_inicio >= :mesInicio', { mesInicio })
+        .andWhere('viaje.fecha_inicio <= :mesFin', { mesFin })
+        .getRawOne();
+
+      const ingresos = Number(ingresosResult.total) || 0;
+      const gastosViaje = Number(gastosViajeResult.total) || 0;
+      const gastosCamion = Number(gastosCamionResult.total) || 0;
+      const egresos = gastosViaje + gastosCamion;
+      const balance = ingresos - egresos;
+
+      data.push({
+        mes: `${mesesNombres[fechaMes.getMonth()]} ${fechaMes.getFullYear()}`,
+        balance: balance
+      });
+    }
+
+    this.logger.log(`Estadísticas gráficas calculadas para ${data.length} meses`);
+
+    return { data };
    }   
 }
