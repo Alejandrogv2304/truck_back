@@ -1,0 +1,34 @@
+services:
+  # Backend API
+  - type: web
+    name: truck-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: APP_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DURACION_ACCESS_TOKEN
+        value: 24h
+      - key: PORT
+        value: 3000
+      - key: FRONTEND_URL
+        sync: false # Configurar manualmente
+      - key: DATABASE_URL
+        fromDatabase:
+          name: truck-db
+          property: connectionString
+
+databases:
+  - name: truck-db
+    databaseName: truck_database
+    user: truck_user
+    plan: free
+    region: oregon
