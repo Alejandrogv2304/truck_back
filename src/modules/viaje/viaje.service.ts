@@ -10,6 +10,7 @@ import { CreateViajeResponseDto, ViajeDataDto } from './dto/create-viaje-respons
 import { PaginatedViajesResponseDto } from './dto/paginated-viajes-response.dto';
 import { PaginationQueryDto } from './dto/pagination-query.dto';
 import { UpdateViajeDto } from './dto/update-viaje.dto';
+import { EstadisticasViajesDto } from './dto/estadisticas-dto';
 
 
 @Injectable()
@@ -323,5 +324,56 @@ export class ViajeService {
 }
 
 
-      
+   async getEstadisticasViajes(idAdmin: number): Promise<EstadisticasViajesDto> {
+    this.logger.log(`Obteniendo estadísticas de viajes para admin ${idAdmin}`);
+
+    // Suma total de todos los viajes activos (ingresos)
+    const totalViajes = await this.viajeRepository
+      .createQueryBuilder('viaje')
+      .select('COALESCE(SUM(viaje.valor), 0)', 'total')
+      .where('viaje.estado = :estado', { estado: ViajeEstado.ACTIVO })
+      .andWhere('viaje.id_admin = :idAdmin', { idAdmin })
+      .getRawOne();
+
+      // Suma total de todos los viajes activos (numero de viajes)
+    const totalNumeroViajes = await this.viajeRepository
+      .createQueryBuilder('viaje')
+      .select('COUNT(viaje.id_viaje)', 'numeroViajes')
+      .where('viaje.estado = :estado', { estado: ViajeEstado.ACTIVO })
+      .andWhere('viaje.id_admin = :idAdmin', { idAdmin })
+      .getRawOne();
+
+    // Suma de todos los gastos de viaje (solo de viajes activos)
+    const totalGastosViaje = await this.viajeRepository
+      .createQueryBuilder('viaje')
+      .leftJoin('viaje.gastos_viaje', 'gastos_viaje')
+      .select('COALESCE(SUM(gastos_viaje.valor), 0)', 'total')
+      .where('viaje.estado = :estado', { estado: ViajeEstado.ACTIVO })
+      .andWhere('viaje.id_admin = :idAdmin', { idAdmin })
+      .getRawOne();
+
+    // Suma de todos los gastos de camión (de los camiones que tienen viajes activos)
+    const totalGastosCamion = await this.viajeRepository
+      .createQueryBuilder('viaje')
+      .leftJoin('viaje.camion', 'camion')
+      .leftJoin('camion.gastos_camion', 'gastos_camion')
+      .select('COALESCE(SUM(gastos_camion.valor), 0)', 'total')
+      .where('viaje.estado = :estado', { estado: ViajeEstado.ACTIVO })
+      .andWhere('viaje.id_admin = :idAdmin', { idAdmin })
+      .getRawOne();
+
+    const ingresos = Number(totalViajes.total) || 0;
+    const gastosViaje = Number(totalGastosViaje.total) || 0;
+    const gastosCamion = Number(totalGastosCamion.total) || 0;
+    const egresos = gastosViaje + gastosCamion;
+    const total = Number(totalNumeroViajes.numeroViajes) || 0;
+
+    
+
+    return {
+      total: total,
+      ingresos: ingresos,
+      egresos: egresos
+    };
+   }   
 }

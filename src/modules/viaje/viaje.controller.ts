@@ -54,6 +54,16 @@ export class ViajeController {
 
 
     @UseGuards(JwtAuthGuard)
+          @Get('/estadisticas')
+          async getEstadisticasViaje(
+          @Req() req: RequestWithUser
+          ) {
+          const idAdmin = req.user.sub;
+          return await this.viajeService.getEstadisticasViajes(idAdmin);
+           }
+
+
+    @UseGuards(JwtAuthGuard)
           @Get('/:id')
           async getOneViaje(
           @Param('id', ParseIntPipe) id: number,

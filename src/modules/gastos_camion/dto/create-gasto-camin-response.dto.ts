@@ -18,4 +18,5 @@ export class GastoCamionResponseDto{
     fecha: Date;
     id_camion:number;
     id_admin:number;
+    placa: string
 }

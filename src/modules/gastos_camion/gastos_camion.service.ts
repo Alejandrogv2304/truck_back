@@ -230,7 +230,8 @@ export class GastosCamionService {
       descripcion: gasto.descripcion,
       fecha: gasto.fecha,
       id_camion: gasto.id_camion,
-      id_admin: gasto.id_admin
+      id_admin: gasto.id_admin,
+      placa: gasto.camion.placa
     };
   }
 
