@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: truck-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - APP_ENV=production
+      - PORT=3000
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - DURACION_ACCESS_TOKEN=${DURACION_ACCESS_TOKEN}
+      - FRONTEND_URL=http://localhost:8080
+    networks:
+      - truck-network
+
+networks:
+  truck-network:
+    driver: bridge
