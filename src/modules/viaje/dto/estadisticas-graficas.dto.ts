@@ -18,7 +18,6 @@ export class DetalleViajeInformeDto {
     conductor: string;
     valor_viaje: number;
     gastos_viaje: number;
-    gastos_camion: number;
     balance_viaje: number;
 }
 
@@ -30,4 +29,12 @@ export class InformeMensualDto {
     egresos_totales: number;
     balance_total: number;
     detalle_viajes: DetalleViajeInformeDto[];
+    detalle_gastos_camion: DettallesGastosCamionDto[];
+}
+
+export class DettallesGastosCamionDto {
+    valor:number;
+    tipo_gasto:string;
+    descripcion:string;
+    fecha:Date;
 }

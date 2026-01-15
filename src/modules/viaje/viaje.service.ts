@@ -12,7 +12,7 @@ import { PaginatedViajesResponseDto } from './dto/paginated-viajes-response.dto'
 import { PaginationQueryDto } from './dto/pagination-query.dto';
 import { UpdateViajeDto } from './dto/update-viaje.dto';
 import { EstadisticasViajesDto } from './dto/estadisticas-dto';
-import { EstadisticasGraficasResponseDto, EstadisticasMesDto, InformeMensualDto, DetalleViajeInformeDto } from './dto/estadisticas-graficas.dto';
+import { EstadisticasGraficasResponseDto, EstadisticasMesDto, InformeMensualDto, DetalleViajeInformeDto, DettallesGastosCamionDto } from './dto/estadisticas-graficas.dto';
 
 
 @Injectable()
@@ -509,11 +509,35 @@ export class ViajeService {
        .andWhere('gastos_camion.fecha <= :mesFin', { mesFin })
        .getRawOne();
 
+    //Obtener detalles de los gastos del camion en ese mes
+    const gastosCamionDetalles = await this.gastosCamionRepository.find({
+       where: {
+         admin: { id_admin: idAdmin },
+         camion: { id_camion: idCamion },
+         fecha: Between(mesInicio, mesFin)
+       },
+       relations: ['camion', 'admin'],
+       order: { fecha: 'ASC' }
+     });
+       
+
      const totalGastosCamionMes = Number(gastosCamionMes?.total) || 0;
 
      let ingresosTotales = 0;
+     let contadorEgresosTotales = 0;
      let egresosTotales = 0;
      const detalleViajes: DetalleViajeInformeDto[] = [];
+     const detalleGastosCamion: DettallesGastosCamionDto[] = [];
+
+     //Proceso cada gasto
+     for (const gasto of gastosCamionDetalles) {
+      detalleGastosCamion.push({
+        valor: gasto.valor,
+        tipo_gasto: gasto.tipo_gasto,
+        descripcion: gasto.descripcion,
+        fecha: gasto.fecha
+      });
+     }
 
      // Procesar cada viaje
      for (const viaje of viajes) {
@@ -523,12 +547,13 @@ export class ViajeService {
          .reduce((sum, g) => sum + Number(g.valor), 0) || 0;
 
        const valorViaje = Number(viaje.valor) || 0;
-       // Los gastos de camión se distribuyen proporcionalmente entre los viajes del mes
-       const gastosCamionPorViaje = viajes.length > 0 ? totalGastosCamionMes / viajes.length : 0;
-       const balanceViaje = valorViaje - (gastosViaje + gastosCamionPorViaje);
+       
+      
+       const balanceViaje = valorViaje - (gastosViaje );
 
        ingresosTotales += valorViaje;
-       egresosTotales += (gastosViaje + gastosCamionPorViaje);
+       contadorEgresosTotales += (gastosViaje);
+       egresosTotales = contadorEgresosTotales + totalGastosCamionMes;
 
        detalleViajes.push({
          id_viaje: viaje.id_viaje,
@@ -540,7 +565,6 @@ export class ViajeService {
          conductor: viaje.conductor.nombre,
          valor_viaje: valorViaje,
          gastos_viaje: gastosViaje,
-         gastos_camion: gastosCamionPorViaje,
          balance_viaje: balanceViaje
        });
      }
@@ -558,7 +582,8 @@ export class ViajeService {
        ingresos_totales: ingresosTotales,
        egresos_totales: egresosTotales,
        balance_total: balanceTotal,
-       detalle_viajes: detalleViajes
+       detalle_viajes: detalleViajes,
+       detalle_gastos_camion: detalleGastosCamion,
      };
    }   
 }
