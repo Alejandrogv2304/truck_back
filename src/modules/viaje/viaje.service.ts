@@ -357,14 +357,13 @@ export class ViajeService {
       .getRawOne();
 
     // Suma de todos los gastos de camión (de los camiones que tienen viajes activos)
-    const totalGastosCamion = await this.viajeRepository
-      .createQueryBuilder('viaje')
-      .leftJoin('viaje.camion', 'camion')
-      .leftJoin('camion.gastos_camion', 'gastos_camion')
-      .select('COALESCE(SUM(gastos_camion.valor), 0)', 'total')
-      .where('viaje.estado = :estado', { estado: ViajeEstado.ACTIVO })
-      .andWhere('viaje.id_admin = :idAdmin', { idAdmin })
-      .getRawOne();
+      // Nota: si sumamos gastos_camion desde viaje (JOIN), el mismo gasto se duplica
+      // por cada viaje del camión. Por eso se suma directo desde gastos_camion.
+      const totalGastosCamion = await this.gastosCamionRepository
+        .createQueryBuilder('gastos_camion')
+        .select('COALESCE(SUM(gastos_camion.valor), 0)', 'total')
+        .where('gastos_camion.id_admin = :idAdmin', { idAdmin })
+        .getRawOne();
 
     const ingresos = Number(totalViajes.total) || 0;
     const gastosViaje = Number(totalGastosViaje.total) || 0;
@@ -415,14 +414,14 @@ export class ViajeService {
         .getRawOne();
 
       // Calcular gastos de camión del mes (de los camiones que tienen viajes en ese mes)
-      const gastosCamionResult = await this.viajeRepository
-        .createQueryBuilder('viaje')
-        .leftJoin('viaje.camion', 'camion')
-        .leftJoin('camion.gastos_camion', 'gastos_camion')
+      // Nota: sumar gastos_camion desde viaje duplica filas si un camión tiene múltiples viajes.
+      // Además, para el mes tiene más sentido filtrar por la fecha del gasto.
+      const gastosCamionResult = await this.gastosCamionRepository
+        .createQueryBuilder('gastos_camion')
         .select('COALESCE(SUM(gastos_camion.valor), 0)', 'total')
-        .where('viaje.id_admin = :idAdmin', { idAdmin })
-        .andWhere('viaje.fecha_inicio >= :mesInicio', { mesInicio })
-        .andWhere('viaje.fecha_inicio <= :mesFin', { mesFin })
+        .where('gastos_camion.id_admin = :idAdmin', { idAdmin })
+        .andWhere('gastos_camion.fecha >= :mesInicio', { mesInicio })
+        .andWhere('gastos_camion.fecha <= :mesFin', { mesFin })
         .getRawOne();
 
       const ingresos = Number(ingresosResult.total) || 0;
@@ -505,6 +504,7 @@ export class ViajeService {
        .createQueryBuilder('gastos_camion')
        .select('COALESCE(SUM(gastos_camion.valor), 0)', 'total')
        .where('gastos_camion.id_camion = :idCamion', { idCamion })
+       .andWhere('gastos_camion.id_admin = :idAdmin', { idAdmin })
        .andWhere('gastos_camion.fecha >= :mesInicio', { mesInicio })
        .andWhere('gastos_camion.fecha <= :mesFin', { mesFin })
        .getRawOne();
