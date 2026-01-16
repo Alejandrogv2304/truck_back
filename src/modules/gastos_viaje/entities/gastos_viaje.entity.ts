@@ -11,6 +11,7 @@ export enum tipoGastosViaje {
   peajes = 'peajes',
   combustible = 'combustible',
   viaticos = 'viaticos',
+  lavadas = 'lavadas',
   otro= 'otro'
 }
 

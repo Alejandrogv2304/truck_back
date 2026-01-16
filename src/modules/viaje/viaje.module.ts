@@ -7,10 +7,11 @@ import { Admin } from '../admin/entities/admin.entity';
 import { Camion } from '../camion/entities/camion.entity';
 import { Conductor } from '../conductor/entities/conductor.entity';
 import { GastosCamion } from '../gastos_camion/entities/gastos_camion.entity';
+import { GastosViaje } from '../gastos_viaje/entities/gastos_viaje.entity';
 
 
 @Module({
-  imports:[TypeOrmModule.forFeature([Viaje, Admin, Camion, Conductor, GastosCamion])],
+  imports:[TypeOrmModule.forFeature([Viaje, Admin, Camion, Conductor, GastosCamion, GastosViaje])],
   providers: [ViajeService],
   controllers: [ViajeController],
   exports: [ViajeService],

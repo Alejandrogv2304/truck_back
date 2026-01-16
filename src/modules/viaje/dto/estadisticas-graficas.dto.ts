@@ -30,6 +30,7 @@ export class InformeMensualDto {
     balance_total: number;
     detalle_viajes: DetalleViajeInformeDto[];
     detalle_gastos_camion: DettallesGastosCamionDto[];
+    detalle_gastos_agrupados: DettallesGastosAgrupadosDto[];
 }
 
 export class DettallesGastosCamionDto {
@@ -37,4 +38,8 @@ export class DettallesGastosCamionDto {
     tipo_gasto:string;
     descripcion:string;
     fecha:Date;
+}
+export class DettallesGastosAgrupadosDto {
+    valor:number;
+    tipo_gasto:string;
 }

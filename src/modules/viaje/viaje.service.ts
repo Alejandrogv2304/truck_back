@@ -12,7 +12,8 @@ import { PaginatedViajesResponseDto } from './dto/paginated-viajes-response.dto'
 import { PaginationQueryDto } from './dto/pagination-query.dto';
 import { UpdateViajeDto } from './dto/update-viaje.dto';
 import { EstadisticasViajesDto } from './dto/estadisticas-dto';
-import { EstadisticasGraficasResponseDto, EstadisticasMesDto, InformeMensualDto, DetalleViajeInformeDto, DettallesGastosCamionDto } from './dto/estadisticas-graficas.dto';
+import { EstadisticasGraficasResponseDto, EstadisticasMesDto, InformeMensualDto, DetalleViajeInformeDto, DettallesGastosCamionDto, DettallesGastosAgrupadosDto } from './dto/estadisticas-graficas.dto';
+import { GastosViaje } from '../gastos_viaje/entities/gastos_viaje.entity';
 
 
 @Injectable()
@@ -29,6 +30,8 @@ export class ViajeService {
          private readonly conductorRepository: Repository<Conductor>,
          @InjectRepository(GastosCamion)
          private readonly gastosCamionRepository: Repository<GastosCamion>,
+         @InjectRepository(GastosViaje)
+         private readonly gastosViajeRepository: Repository<GastosViaje>,
      ){}
 
      /**
@@ -513,6 +516,18 @@ export class ViajeService {
        .andWhere('gastos_camion.fecha <= :mesFin', { mesFin })
        .getRawOne();
 
+    //Obtengo los gastos de viaje agrupados por tipo de gasto
+    const gastosViajeAgrupados = await this.gastosViajeRepository
+      .createQueryBuilder('gastos_viaje')
+      .select('gastos_viaje.tipo_gasto', 'tipo_gasto')
+      .addSelect('COALESCE(SUM(gastos_viaje.valor), 0)', 'total')
+      .innerJoin('gastos_viaje.viaje', 'viaje')
+      .where('viaje.id_camion = :idCamion', { idCamion })
+      .andWhere('viaje.fecha_inicio >= :mesInicio', { mesInicio })
+      .andWhere('viaje.fecha_inicio <= :mesFin', { mesFin })
+      .groupBy('gastos_viaje.tipo_gasto')
+      .getRawMany();
+
     //Obtener detalles de los gastos del camion en ese mes
     const gastosCamionDetalles = await this.gastosCamionRepository.find({
        where: {
@@ -532,6 +547,15 @@ export class ViajeService {
      let egresosTotales = 0;
      const detalleViajes: DetalleViajeInformeDto[] = [];
      const detalleGastosCamion: DettallesGastosCamionDto[] = [];
+     const detalleGastosAgrupados: DettallesGastosAgrupadosDto[] = [];
+
+     //Procesamiento para gastos agrupados
+     for (const gastoAgrupado of gastosViajeAgrupados) {
+      detalleGastosAgrupados.push({
+        tipo_gasto: gastoAgrupado.tipo_gasto,
+        valor: Number(gastoAgrupado.total)
+      });
+     }
 
      //Proceso cada gasto
      for (const gasto of gastosCamionDetalles) {
@@ -588,6 +612,7 @@ export class ViajeService {
        balance_total: balanceTotal,
        detalle_viajes: detalleViajes,
        detalle_gastos_camion: detalleGastosCamion,
+       detalle_gastos_agrupados: detalleGastosAgrupados,
      };
    }   
 }
