@@ -30,16 +30,36 @@ export class ViajeController {
              return await this.viajeService.updateStateViaje(id,idAdmin);
             }
 
+    // Rutas específicas 
     @UseGuards(JwtAuthGuard)
-    @Get()
-    async getAllViajes(
-      @Query() paginationQuery: PaginationQueryDto,
-      @Req() req: RequestWithUser
-    ) {
-      const idAdmin = req.user.sub;
-      return await this.viajeService.getAllViajes(paginationQuery, idAdmin);
-    }
+          @Get('estadisticas/graficas')
+          async getEstadisticasGraficas(
+          @Req() req: RequestWithUser
+          ) {
+          const idAdmin = req.user.sub;
+          return await this.viajeService.getEstadisticasGraficas(idAdmin);
+           }
 
+    @UseGuards(JwtAuthGuard)
+          @Get('estadisticas/informe/:idCamion/:mes/:anio')
+          async getEstadisticasInformes(
+          @Param('idCamion', ParseIntPipe) idCamion: number,
+          @Param('mes', ParseIntPipe) mes: number,
+          @Param('anio', ParseIntPipe) anio: number,
+          @Req() req: RequestWithUser
+          ) {
+          const idAdmin = req.user.sub;
+          return await this.viajeService.getEstadisticasInformes(idAdmin, mes, anio, idCamion);
+           }
+
+    @UseGuards(JwtAuthGuard)
+          @Get('estadisticas')
+          async getEstadisticasViaje(
+          @Req() req: RequestWithUser
+          ) {
+          const idAdmin = req.user.sub;
+          return await this.viajeService.getEstadisticasViajes(idAdmin);
+           }
 
      @UseGuards(JwtAuthGuard)
              @Patch('/:id')
@@ -52,42 +72,20 @@ export class ViajeController {
                 return await this.viajeService.updateViaje(idViaje,updateViajeDto,idAdmin);
               }
 
+    // Rutas con parámetros dinámicos AL FINAL
+    @UseGuards(JwtAuthGuard)
+    @Get(':idCamion')
+    async getAllViajes(
+      @Query() paginationQuery: PaginationQueryDto,
+      @Req() req: RequestWithUser,
+      @Param('idCamion', ParseIntPipe) idCamion: number,
+    ) {
+      const idAdmin = req.user.sub;
+      return await this.viajeService.getAllViajes(paginationQuery, idAdmin, idCamion);
+    }
 
     @UseGuards(JwtAuthGuard)
-          @Get('/estadisticas')
-          async getEstadisticasViaje(
-          @Req() req: RequestWithUser
-          ) {
-          const idAdmin = req.user.sub;
-          return await this.viajeService.getEstadisticasViajes(idAdmin);
-           }
-
-
-    @UseGuards(JwtAuthGuard)
-          @Get('/estadisticas/graficas')
-          async getEstadisticasGraficas(
-          @Req() req: RequestWithUser
-          ) {
-          const idAdmin = req.user.sub;
-          return await this.viajeService.getEstadisticasGraficas(idAdmin);
-           }
-
-
-    @UseGuards(JwtAuthGuard)
-          @Get('/estadisticas/informe/:idCamion/:mes/:anio')
-          async getEstadisticasInformes(
-          @Param('idCamion', ParseIntPipe) idCamion: number,
-          @Param('mes', ParseIntPipe) mes: number,
-          @Param('anio', ParseIntPipe) anio: number,
-          @Req() req: RequestWithUser
-          ) {
-          const idAdmin = req.user.sub;
-          return await this.viajeService.getEstadisticasInformes(idAdmin, mes, anio, idCamion);
-           }
-
-
-    @UseGuards(JwtAuthGuard)
-          @Get('/:id')
+          @Get('/detalle/:id')
           async getOneViaje(
           @Param('id', ParseIntPipe) id: number,
           @Req() req: RequestWithUser

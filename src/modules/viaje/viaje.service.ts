@@ -196,7 +196,8 @@ export class ViajeService {
      */
     async getAllViajes(
       paginationQuery: PaginationQueryDto,
-      idAdmin: number
+      idAdmin: number,
+      idCamion: number
     ): Promise<PaginatedViajesResponseDto> {
         const { page = 1, limit = 20 } = paginationQuery;
         
@@ -211,7 +212,8 @@ export class ViajeService {
           // Contar total de registros (para metadata)
           const [viajes, total] = await this.viajeRepository.findAndCount({
             where: { 
-              admin: { id_admin: idAdmin }
+              admin: { id_admin: idAdmin },
+              camion: { id_camion: idCamion }
             },
             relations: ['camion', 'conductor'],  
             order: { fecha_inicio: 'DESC' },
@@ -429,6 +431,8 @@ export class ViajeService {
       const gastosCamion = Number(gastosCamionResult.total) || 0;
       const egresos = gastosViaje + gastosCamion;
       const balance = ingresos - egresos;
+
+      
 
       data.push({
         mes: `${mesesNombres[fechaMes.getMonth()]} ${fechaMes.getFullYear()}`,
