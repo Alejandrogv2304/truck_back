@@ -4,6 +4,7 @@ import { Camion } from 'src/modules/camion/entities/camion.entity';
 import { Conductor } from 'src/modules/conductor/entities/conductor.entity';
 import { GastosViaje } from 'src/modules/gastos_viaje/entities/gastos_viaje.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import { DateTransformer } from 'src/common/transformers/date.transformer';
 
 export enum ViajeEstado {
   ACTIVO = 'activo',
@@ -24,7 +25,7 @@ export class Viaje {
   @Column({ unique: true, length: 40 })
   num_manifiesto: string;
 
-  @Column({ type: 'date' })
+  @Column({ type: 'date', transformer: new DateTransformer() })
   fecha_inicio: Date;
 
   @Column({

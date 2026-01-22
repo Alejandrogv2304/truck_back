@@ -102,9 +102,7 @@ export class ViajeService {
             lugar_destino: createViajeDto.lugar_destino, 
             num_manifiesto: createViajeDto.num_manifiesto,
             valor: createViajeDto.valor,
-            fecha_inicio: createViajeDto.fecha_inicio 
-              ? new Date(createViajeDto.fecha_inicio) 
-              : new Date(),
+            fecha_inicio: createViajeDto.fecha_inicio || new Date(),
             ...(createViajeDto.estado && { estado: createViajeDto.estado }),
             conductor: conductor, 
             camion: camion,       
@@ -202,7 +200,7 @@ export class ViajeService {
       idAdmin: number,
       idCamion: number
     ): Promise<PaginatedViajesResponseDto> {
-        const { page = 1, limit = 20 } = paginationQuery;
+        const { page = 1, limit = 10 } = paginationQuery;
         
         this.logger.log(
           `Consultando viajes del admin ${idAdmin} - Página: ${page}, Límite: ${limit}`

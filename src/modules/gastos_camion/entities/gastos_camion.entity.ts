@@ -1,6 +1,7 @@
 import { Admin } from 'src/modules/admin/entities/admin.entity';
 import { Camion } from 'src/modules/camion/entities/camion.entity';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { DateTransformer } from 'src/common/transformers/date.transformer';
 
 
 
@@ -37,7 +38,7 @@ export class GastosCamion {
   })
   tipo_gasto: tipoGastosCamion;
 
-  @Column({ type: 'date' })
+  @Column({ type: 'date', transformer: new DateTransformer() })
   fecha: Date;
 
   @Column({ length: 200, nullable: true , type: 'varchar'})
