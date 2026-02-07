@@ -337,7 +337,7 @@ export class ViajeService {
     // Suma total de todos los viajes activos (ingresos)
     const totalViajes = await this.viajeRepository
       .createQueryBuilder('viaje')
-      .innerJoin('viaje.id_camion', 'camion')
+      .innerJoin('viaje.camion', 'camion')
       .select('COALESCE(SUM(viaje.valor), 0)', 'total')
       .where('viaje.estado = :estado', { estado: ViajeEstado.ACTIVO })
       .andWhere('viaje.id_admin = :idAdmin', { idAdmin })
@@ -402,7 +402,7 @@ export class ViajeService {
       // Calcular ingresos del mes (suma de valores de viajes)
       const ingresosResult = await this.viajeRepository
         .createQueryBuilder('viaje')
-        .innerJoin('viaje.id_camion', 'camion')
+        .innerJoin('viaje.camion', 'camion')
         .select('COALESCE(SUM(viaje.valor), 0)', 'total')
         .where('viaje.id_admin = :idAdmin', { idAdmin })
         .andWhere('viaje.fecha_inicio >= :mesInicio', { mesInicio })
