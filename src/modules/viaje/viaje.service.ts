@@ -337,9 +337,11 @@ export class ViajeService {
     // Suma total de todos los viajes activos (ingresos)
     const totalViajes = await this.viajeRepository
       .createQueryBuilder('viaje')
+      .innerJoin('viaje.id_camion', 'camion')
       .select('COALESCE(SUM(viaje.valor), 0)', 'total')
       .where('viaje.estado = :estado', { estado: ViajeEstado.ACTIVO })
       .andWhere('viaje.id_admin = :idAdmin', { idAdmin })
+      .andWhere('camion.estado = :estadoCamion', { estadoCamion: 'activo' })
       .getRawOne();
 
       // Suma total de todos los viajes activos (numero de viajes)
@@ -400,10 +402,13 @@ export class ViajeService {
       // Calcular ingresos del mes (suma de valores de viajes)
       const ingresosResult = await this.viajeRepository
         .createQueryBuilder('viaje')
+        .innerJoin('viaje.id_camion', 'camion')
         .select('COALESCE(SUM(viaje.valor), 0)', 'total')
         .where('viaje.id_admin = :idAdmin', { idAdmin })
         .andWhere('viaje.fecha_inicio >= :mesInicio', { mesInicio })
         .andWhere('viaje.fecha_inicio <= :mesFin', { mesFin })
+        .andWhere('viaje.estado = :estado', { estado: ViajeEstado.ACTIVO })
+        .andWhere('camion.estado = :estadoCamion', { estadoCamion: 'activo' })
         .getRawOne();
 
       // Calcular gastos de viaje del mes
@@ -414,6 +419,7 @@ export class ViajeService {
         .where('viaje.id_admin = :idAdmin', { idAdmin })
         .andWhere('viaje.fecha_inicio >= :mesInicio', { mesInicio })
         .andWhere('viaje.fecha_inicio <= :mesFin', { mesFin })
+        .andWhere('viaje.estado = :estado', { estado: ViajeEstado.ACTIVO })
         .getRawOne();
 
       // Calcular gastos de camión del mes (de los camiones que tienen viajes en ese mes)
@@ -498,7 +504,8 @@ export class ViajeService {
        where: {
          admin: { id_admin: idAdmin },
          camion: { id_camion: idCamion },
-         fecha_inicio: Between(mesInicio, mesFin)
+         fecha_inicio: Between(mesInicio, mesFin),
+         estado: ViajeEstado.ACTIVO
        },
        relations: ['camion', 'conductor', 'gastos_viaje'],
        order: { fecha_inicio: 'ASC' }
@@ -523,6 +530,7 @@ export class ViajeService {
       .where('viaje.id_camion = :idCamion', { idCamion })
       .andWhere('viaje.fecha_inicio >= :mesInicio', { mesInicio })
       .andWhere('viaje.fecha_inicio <= :mesFin', { mesFin })
+      .andWhere('viaje.estado = :estado', { estado: ViajeEstado.ACTIVO })
       .groupBy('gastos_viaje.tipo_gasto')
       .getRawMany();
 
