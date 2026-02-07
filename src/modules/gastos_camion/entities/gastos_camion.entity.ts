@@ -12,6 +12,7 @@ export enum tipoGastosCamion {
   bateria = 'bateria',
   lavadas = 'lavadas',
   nomina = 'nomina',
+  peajes='peajes',
   otro= 'otro'
 }
 
